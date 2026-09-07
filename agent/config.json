@@ -1,0 +1,25 @@
+{
+  "apiUrl": "https://vila27.vercel.app",
+  "token": "TU_DAJ_TAJNY_TOKEN_ROVNAKY_AKO_NA_VERCELI",
+  "pollSeconds": 5,
+
+  "printer": {
+    "mode": "windows",
+
+    "windows": { "share": "\\\\localhost\\POS80" },
+
+    "tcp": { "host": "192.168.1.87", "port": 9100 },
+
+    "command": { "command": "lp -d POS80 -o raw" },
+
+    "file": { "path": "./posledny-blocek.bin" }
+  },
+
+  "receipt": {
+    "width": 42,
+    "charset": "cp852",
+    "showPrices": false,
+    "copies": 1,
+    "copyLabels": []
+  }
+}

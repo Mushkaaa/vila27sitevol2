@@ -1,0 +1,13 @@
+{
+  "name": "vila27-print-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lokálny tlačový agent pre Vila 27 – tlačí objednávky na termotlačiareň CK710-USE",
+  "main": "print-agent.js",
+  "scripts": {
+    "start": "node print-agent.js",
+    "test-print": "node test-print.js",
+    "nahlad": "node test-print.js --nahlad"
+  },
+  "engines": { "node": ">=18" }
+}
