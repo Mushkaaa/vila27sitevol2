@@ -81,7 +81,36 @@
     mask-position:top left, bottom left;
     -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
   }
-  .ticket.fresh{box-shadow:0 0 0 3px var(--honey),0 20px 40px -24px rgba(0,0,0,.8)}
+  .ticket.fresh{animation:freshPulse 1.1s ease-in-out infinite}
+  @keyframes freshPulse{
+    0%,100%{box-shadow:0 0 0 3px var(--red),0 20px 40px -24px rgba(0,0,0,.8)}
+    50%{box-shadow:0 0 0 8px var(--red),0 20px 40px -24px rgba(0,0,0,.8)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ticket.fresh{animation:none;box-shadow:0 0 0 5px var(--red),0 20px 40px -24px rgba(0,0,0,.8)}
+  }
+
+  /* --- upozornenie na novú objednávku (bez zvuku, len vizuálne) --- */
+  .alert{
+    position:fixed;left:0;right:0;top:0;z-index:100;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    padding:20px 26px;box-shadow:0 14px 44px rgba(0,0,0,.7);
+    animation:alertFlash 1.1s ease-in-out infinite;
+  }
+  @keyframes alertFlash{
+    0%,49%{background:var(--red);color:#fff}
+    50%,100%{background:#fff;color:var(--red)}
+  }
+  .alert .a-txt{font-size:1.9rem;font-weight:900;letter-spacing:-.02em;line-height:1}
+  .alert .a-nums{font-family:"JetBrains Mono",monospace;font-size:1.35rem;font-weight:700}
+  .alert button{
+    margin-left:auto;background:var(--ink);border-color:var(--ink);color:#fff;
+    font-size:1rem;padding:.85rem 1.8rem;
+  }
+  .alert button:hover{background:#000;border-color:#000}
+  @media (prefers-reduced-motion:reduce){
+    .alert{animation:none;background:var(--red);color:#fff}
+  }
 
   .t-head{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:10px}
   .t-num{font-size:1.9rem;font-weight:900;line-height:1}
@@ -135,10 +164,16 @@
 </div>
 
 <div id="app" hidden>
+  <div id="alert" class="alert" role="alert" aria-live="assertive" hidden>
+    <span class="a-txt">Nová objednávka</span>
+    <span class="a-nums" id="alertNums"></span>
+    <button id="alertOk">Prevzaté</button>
+  </div>
   <div class="bar">
     <svg viewBox="10 5 160 100" style="height:28px;width:auto;fill:#fff" aria-hidden="true"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg><h1>Objednávky</h1>
     <span class="stat"><span class="dot"></span><span id="live">načítavam…</span></span>
     <span class="spacer"></span>
+    <button id="notif">🖥 Upozornenia: vyp</button>
     <button id="sound">🔔 Zvuk: vyp</button>
     <button id="logout">Odhlásiť</button>
   </div>
@@ -147,9 +182,14 @@
 
 <script>
 const KEY = "vila27_admin_token";
+const NKEY = "vila27_admin_notif";
+const TITLE = document.title;
 const $ = s => document.querySelector(s);
 let token = localStorage.getItem(KEY) || "";
-let seen = new Set(), soundOn = false, first = true;
+let seen = new Set();        // všetko, čo už bolo vykreslené – slúži na detekciu nových
+let unack = new Set();       // nové objednávky, ktoré obsluha ešte nepotvrdila
+let newNums = [];            // ich čísla do pruhu hore
+let orders = [], soundOn = false, notifOn = false, first = true, titleT = null;
 
 const eur = n => (Number(n)||0).toFixed(2).replace(".", ",") + " €";
 const cas = iso => { const d = new Date(iso), p = n => String(n).padStart(2,"0");
@@ -170,12 +210,64 @@ function beep(){
   }catch(e){}
 }
 
+/* Pruh hore bliká, kým ho obsluha nepotvrdí – zvuk sa nepoužíva, lebo výstup
+   ide do reproduktorov v reštaurácii. */
+function raiseAlert(fresh){
+  fresh.forEach(o => { unack.add(o.id); newNums.push("#" + o.number); });
+  $("#alertNums").textContent = newNums.join("  ");
+  $("#alert").hidden = false;
+  fitAlert();
+  if(!titleT){
+    let on = false;
+    titleT = setInterval(() => {
+      on = !on;
+      document.title = on ? `🔴 NOVÁ OBJEDNÁVKA (${newNums.length})` : TITLE;
+    }, 900);
+  }
+  try{ if(navigator.vibrate) navigator.vibrate([300, 120, 300]); }catch(e){}
+  notify(fresh);
+  if(soundOn) beep();
+}
+
+function clearAlert(){
+  unack.clear(); newNums = [];
+  $("#alert").hidden = true;
+  fitAlert();
+  clearInterval(titleT); titleT = null;
+  document.title = TITLE;
+  draw();
+}
+
+/* pruh je fixed, takže obsahu treba uvoľniť miesto presne podľa jeho výšky */
+function fitAlert(){
+  const a = $("#alert");
+  document.body.style.paddingTop = a.hidden ? "" : (a.offsetHeight + 20) + "px";
+}
+addEventListener("resize", fitAlert);
+
+/* systémové upozornenie – prebudí aj zakrytý prehliadač, zámerne bez zvuku */
+function notify(fresh){
+  if(!notifOn || !("Notification" in window) || Notification.permission !== "granted") return;
+  fresh.forEach(o => {
+    try{
+      const n = new Notification(`Nová objednávka #${o.number}`, {
+        body: `${o.mode === "odber" ? "Osobný odber" : "Rozvoz"} · ${eur(o.total)}\n${o.customer?.name || ""}`,
+        tag: "vila27-" + o.id,
+        requireInteraction: true,
+        silent: true,
+        icon: "favicon.svg"
+      });
+      n.onclick = () => { window.focus(); n.close(); };
+    }catch(e){}
+  });
+}
+
 function ticket(o){
   const items = (o.items||[]).map(it => `
     <div class="t-item"><span class="q">${it.qty}×</span><span class="n">${esc(it.name)}</span><span class="p">${eur(it.lineTotal)}</span></div>
     ${(it.extras||[]).map(x => `<div class="t-extra">+ ${esc(x)}</div>`).join("")}`).join("");
 
-  return `<article class="ticket ${seen.has(o.id) ? "" : "fresh"}">
+  return `<article class="ticket ${unack.has(o.id) ? "fresh" : ""}">
     <div class="t-head">
       <span class="t-num">#${o.number}</span>
       <span class="t-mode ${o.mode === "odber" ? "odber" : ""}">${o.mode === "odber" ? "Odber" : "Rozvoz"}</span>
@@ -195,20 +287,24 @@ function ticket(o){
   </article>`;
 }
 
+function draw(){
+  $("#board").innerHTML = orders.length
+    ? orders.map(ticket).join("")
+    : `<div class="empty"><b>Zatiaľ nič</b>Nové objednávky sa tu objavia samé.</div>`;
+}
+
 async function load(){
   try{
     const res = await fetch(`/api/queue?token=${encodeURIComponent(token)}&all=1`);
     if(res.status === 401){ logout("Token neplatí."); return; }
-    const { orders = [] } = await res.json();
+    const data = await res.json();
+    orders = data.orders || [];
 
     const fresh = orders.filter(o => !seen.has(o.id));
-    if(fresh.length && !first && soundOn) beep();
-
-    $("#board").innerHTML = orders.length
-      ? orders.map(ticket).join("")
-      : `<div class="empty"><b>Zatiaľ nič</b>Nové objednávky sa tu objavia samé.</div>`;
-
     orders.forEach(o => seen.add(o.id));
+    if(fresh.length && !first) raiseAlert(fresh);
+
+    draw();
     first = false;
     $("#live").textContent = `${orders.length} objednávok · ${new Date().toLocaleTimeString("sk-SK")}`;
   }catch(e){
@@ -217,7 +313,8 @@ async function load(){
 }
 
 function logout(msg){
-  localStorage.removeItem(KEY); token = ""; seen = new Set(); first = true;
+  localStorage.removeItem(KEY); token = ""; seen = new Set(); orders = []; first = true;
+  clearAlert();
   $("#app").hidden = true; $("#gate").hidden = false; $("#err").textContent = msg || "";
 }
 
@@ -236,6 +333,23 @@ $("#sound").addEventListener("click", e => {
   e.target.textContent = soundOn ? "🔔 Zvuk: zap" : "🔔 Zvuk: vyp";
   if(soundOn) beep();
 });
+$("#alertOk").addEventListener("click", clearAlert);
+
+function paintNotif(){
+  const b = $("#notif");
+  b.classList.toggle("on", notifOn);
+  b.textContent = notifOn ? "🖥 Upozornenia: zap" : "🖥 Upozornenia: vyp";
+}
+$("#notif").addEventListener("click", async e => {
+  if(notifOn){ notifOn = false; localStorage.removeItem(NKEY); paintNotif(); return; }
+  if(!("Notification" in window)){ e.target.textContent = "🖥 Upozornenia: nepodporované"; return; }
+  let perm = Notification.permission;
+  if(perm === "default") perm = await Notification.requestPermission();
+  if(perm !== "granted"){ e.target.textContent = "🖥 Upozornenia: zakázané v prehliadači"; return; }
+  notifOn = true; localStorage.setItem(NKEY, "1"); paintNotif();
+});
+if(localStorage.getItem(NKEY) === "1" && "Notification" in window && Notification.permission === "granted") notifOn = true;
+paintNotif();
 
 if(token){ $("#app").hidden = false; load(); } else { $("#gate").hidden = false; }
 setInterval(() => { if(token && !$("#app").hidden) load(); }, 5000);
