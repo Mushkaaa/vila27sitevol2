@@ -201,16 +201,24 @@ const cas = iso => { const d = new Date(iso), p = n => String(n).padStart(2,"0")
   return `${p(d.getHours())}:${p(d.getMinutes())}`; };
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 
+/* Dvojité pípnutie: dva zreteľne oddelené tóny. Audio kontext je jeden na celú
+   stránku – prehliadač ich viac ako pár naraz nepovolí, nový pri každom pípnutí
+   by po niekoľkých objednávkach spadol. */
+let actx = null;
 function beep(){
   try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, .18].forEach(t => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(.0001, ctx.currentTime + t);
-      g.gain.exponentialRampToValueAtTime(.3, ctx.currentTime + t + .01);
-      g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + t + .15);
-      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .16);
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    [[0, 880], [.26, 1175]].forEach(([t, hz]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "square"; o.frequency.value = hz;
+      o.connect(g); g.connect(actx.destination);
+      const at = actx.currentTime + t;
+      g.gain.setValueAtTime(.0001, at);
+      g.gain.exponentialRampToValueAtTime(.3, at + .012);
+      g.gain.setValueAtTime(.3, at + .15);
+      g.gain.exponentialRampToValueAtTime(.0001, at + .2);
+      o.start(at); o.stop(at + .21);
     });
   }catch(e){}
 }
@@ -351,6 +359,7 @@ $("#enter").addEventListener("click", () => {
   if(!v){ $("#err").textContent = "Zadaj token."; return; }
   localStorage.setItem(KEY, v); token = v;
   $("#gate").hidden = true; $("#app").hidden = false;
+  askPermission();        // klik na tlačidlo je gesto, ktoré prehliadaču stačí
   load();
 });
 $("#tok").addEventListener("keydown", e => { if(e.key === "Enter") $("#enter").click(); });
@@ -387,20 +396,33 @@ function paintNotif(){
 }
 $("#notif").addEventListener("click", async () => {
   notifOn = !notifOn;
-  if(notifOn){
-    localStorage.setItem(NKEY, "1");
-    try{
-      if("Notification" in window && Notification.permission === "default") await Notification.requestPermission();
-    }catch(e){}
-  }else{
-    localStorage.removeItem(NKEY);
-  }
+  localStorage.setItem(NKEY, notifOn ? "1" : "0");
+  if(notifOn) await askPermission();
   paintNotif();
 });
-notifOn = localStorage.getItem(NKEY) === "1";
+
+/* Povolenie musí dať používateľ v prehliadači, kódom sa nastaviť nedá – tak sa
+   oň pýtame sami hneď po otvorení nástenky. Firefox a Safari to dovolia len po
+   kliknutí, preto je pripravená aj náhrada na prvý klik kdekoľvek na stránke. */
+async function askPermission(){
+  if(!("Notification" in window) || Notification.permission !== "default") return;
+  try{ await Notification.requestPermission(); }catch(e){}
+  paintNotif();
+}
+function armPermissionAsk(){
+  if(!("Notification" in window) || Notification.permission !== "default") return;
+  const once = () => { document.removeEventListener("click", once); askPermission(); };
+  document.addEventListener("click", once);
+}
+
+notifOn = localStorage.getItem(NKEY) !== "0";   // zapnuté, kým to obsluha sama nevypne
 paintNotif();
 
-if(token){ $("#app").hidden = false; load(); } else { $("#gate").hidden = false; }
+if(token){
+  $("#app").hidden = false;
+  askPermission(); armPermissionAsk();
+  load();
+} else { $("#gate").hidden = false; }
 setInterval(() => { if(token && !$("#app").hidden) load(); }, 5000);
 </script>
 </body>
