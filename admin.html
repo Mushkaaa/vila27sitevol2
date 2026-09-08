@@ -103,14 +103,19 @@
   }
   .alert .a-txt{font-size:1.9rem;font-weight:900;letter-spacing:-.02em;line-height:1}
   .alert .a-nums{font-family:"JetBrains Mono",monospace;font-size:1.35rem;font-weight:700}
-  .alert button{
-    margin-left:auto;background:var(--ink);border-color:var(--ink);color:#fff;
-    font-size:1rem;padding:.85rem 1.8rem;
-  }
-  .alert button:hover{background:#000;border-color:#000}
+  .alert .a-hint{margin-left:auto;font-size:.92rem;font-weight:700;opacity:.85}
   @media (prefers-reduced-motion:reduce){
     .alert{animation:none;background:var(--red);color:#fff}
   }
+
+  /* potvrdenie jednej objednávky priamo na bločku */
+  .t-ack{
+    display:block;width:100%;margin-top:14px;padding:.8rem;
+    background:var(--red);border-color:var(--red);color:#fff;font-size:.95rem;
+  }
+  .t-ack:hover{background:#8E1E1E;border-color:#8E1E1E}
+
+  .hint{flex-basis:100%;font-size:.82rem;color:#F0B4A8;line-height:1.4}
 
   .t-head{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:10px}
   .t-num{font-size:1.9rem;font-weight:900;line-height:1}
@@ -167,7 +172,7 @@
   <div id="alert" class="alert" role="alert" aria-live="assertive" hidden>
     <span class="a-txt">Nová objednávka</span>
     <span class="a-nums" id="alertNums"></span>
-    <button id="alertOk">Prevzaté</button>
+    <span class="a-hint">Potvrď každú zvlášť tlačidlom na bločku</span>
   </div>
   <div class="bar">
     <svg viewBox="10 5 160 100" style="height:28px;width:auto;fill:#fff" aria-hidden="true"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg><h1>Objednávky</h1>
@@ -176,6 +181,7 @@
     <button id="notif">🖥 Upozornenia: vyp</button>
     <button id="sound">🔔 Zvuk: vyp</button>
     <button id="logout">Odhlásiť</button>
+    <span class="hint" id="notifHint" hidden></span>
   </div>
   <div class="board" id="board"></div>
 </div>
@@ -187,8 +193,7 @@ const TITLE = document.title;
 const $ = s => document.querySelector(s);
 let token = localStorage.getItem(KEY) || "";
 let seen = new Set();        // všetko, čo už bolo vykreslené – slúži na detekciu nových
-let unack = new Set();       // nové objednávky, ktoré obsluha ešte nepotvrdila
-let newNums = [];            // ich čísla do pruhu hore
+let unack = new Set();       // objednávky, ktoré obsluha ešte nepotvrdila (každú zvlášť)
 let orders = [], soundOn = false, notifOn = false, first = true, titleT = null;
 
 const eur = n => (Number(n)||0).toFixed(2).replace(".", ",") + " €";
@@ -210,31 +215,47 @@ function beep(){
   }catch(e){}
 }
 
-/* Pruh hore bliká, kým ho obsluha nepotvrdí – zvuk sa nepoužíva, lebo výstup
-   ide do reproduktorov v reštaurácii. */
+/* Pruh hore bliká, kým nie je potvrdená každá nová objednávka zvlášť.
+   Zvuk sa nepoužíva, lebo výstup ide do reproduktorov v reštaurácii. */
 function raiseAlert(fresh){
-  fresh.forEach(o => { unack.add(o.id); newNums.push("#" + o.number); });
-  $("#alertNums").textContent = newNums.join("  ");
-  $("#alert").hidden = false;
-  fitAlert();
-  if(!titleT){
-    let on = false;
-    titleT = setInterval(() => {
-      on = !on;
-      document.title = on ? `🔴 NOVÁ OBJEDNÁVKA (${newNums.length})` : TITLE;
-    }, 900);
-  }
+  fresh.forEach(o => unack.add(o.id));
+  refreshAlert();
   try{ if(navigator.vibrate) navigator.vibrate([300, 120, 300]); }catch(e){}
   notify(fresh);
   if(soundOn) beep();
 }
 
-function clearAlert(){
-  unack.clear(); newNums = [];
-  $("#alert").hidden = true;
+/* Zosúladí pruh so zoznamom nepotvrdených – volá sa po prijatí aj po potvrdení. */
+function refreshAlert(){
+  const nums = orders.filter(o => unack.has(o.id)).map(o => "#" + o.number);
+  const on = unack.size > 0;
+  $("#alertNums").textContent = nums.join("  ");
+  $("#alert").hidden = !on;
   fitAlert();
-  clearInterval(titleT); titleT = null;
-  document.title = TITLE;
+
+  if(on && !titleT){
+    let flip = false;
+    titleT = setInterval(() => {
+      flip = !flip;
+      document.title = flip ? `🔴 NOVÁ OBJEDNÁVKA (${unack.size})` : TITLE;
+    }, 900);
+  }
+  if(!on && titleT){
+    clearInterval(titleT); titleT = null;
+    document.title = TITLE;
+  }
+}
+
+/* Potvrdenie jednej objednávky – rám aj číslo v pruhu zmiznú len jej. */
+function ack(id){
+  if(!unack.delete(id)) return;
+  refreshAlert();
+  draw();
+}
+
+function clearAlert(){
+  unack.clear();
+  refreshAlert();
   draw();
 }
 
@@ -284,6 +305,7 @@ function ticket(o){
     ${o.fee ? `<div class="t-sub"><span>Doprava</span><span>${eur(o.fee)}</span></div>` : ""}
     <div class="t-tot"><small>Spolu</small><span>${eur(o.total)}</span></div>
     ${o.customer?.note ? `<div class="t-note"><b>Poznámka</b>${esc(o.customer.note)}</div>` : ""}
+    ${unack.has(o.id) ? `<button class="t-ack" data-ack="${esc(o.id)}">Prevzaté</button>` : ""}
   </article>`;
 }
 
@@ -302,7 +324,13 @@ async function load(){
 
     const fresh = orders.filter(o => !seen.has(o.id));
     orders.forEach(o => seen.add(o.id));
-    if(fresh.length && !first) raiseAlert(fresh);
+
+    // objednávka, ktorá vypadla zo zoznamu, by inak nechala pruh svietiť navždy
+    const live = new Set(orders.map(o => o.id));
+    unack.forEach(id => { if(!live.has(id)) unack.delete(id); });
+
+    if(fresh.length && !first) raiseAlert(fresh);   // raiseAlert si zavolá refreshAlert
+    else refreshAlert();
 
     draw();
     first = false;
@@ -333,22 +361,43 @@ $("#sound").addEventListener("click", e => {
   e.target.textContent = soundOn ? "🔔 Zvuk: zap" : "🔔 Zvuk: vyp";
   if(soundOn) beep();
 });
-$("#alertOk").addEventListener("click", clearAlert);
-
-function paintNotif(){
-  const b = $("#notif");
-  b.classList.toggle("on", notifOn);
-  b.textContent = notifOn ? "🖥 Upozornenia: zap" : "🖥 Upozornenia: vyp";
-}
-$("#notif").addEventListener("click", async e => {
-  if(notifOn){ notifOn = false; localStorage.removeItem(NKEY); paintNotif(); return; }
-  if(!("Notification" in window)){ e.target.textContent = "🖥 Upozornenia: nepodporované"; return; }
-  let perm = Notification.permission;
-  if(perm === "default") perm = await Notification.requestPermission();
-  if(perm !== "granted"){ e.target.textContent = "🖥 Upozornenia: zakázané v prehliadači"; return; }
-  notifOn = true; localStorage.setItem(NKEY, "1"); paintNotif();
+$("#board").addEventListener("click", e => {
+  const b = e.target.closest("[data-ack]");
+  if(b) ack(b.dataset.ack);
 });
-if(localStorage.getItem(NKEY) === "1" && "Notification" in window && Notification.permission === "granted") notifOn = true;
+
+/* Prepínač sa dá vždy prepnúť. Ak systémové okienko blokuje prehliadač,
+   nastavenie sa aj tak uloží a pod lištou sa ukáže, čo s tým – blikajúci
+   pruh na stránke funguje nezávisle od toho. */
+function paintNotif(){
+  $("#notif").classList.toggle("on", notifOn);
+  $("#notif").textContent = notifOn ? "🖥 Upozornenia: zap" : "🖥 Upozornenia: vyp";
+
+  const hint = $("#notifHint");
+  let msg = "";
+  if(notifOn && !("Notification" in window)){
+    msg = "Systémové okienka tento prehliadač nevie zobraziť (alebo stránka nebeží cez https). " +
+          "Blikajúci pruh hore funguje aj tak.";
+  }else if(notifOn && Notification.permission === "denied"){
+    msg = "Systémové okienka blokuje prehliadač – povoľ ich cez ikonu vedľa adresy (Upozornenia → Povoliť) " +
+          "a stránku obnov. Blikajúci pruh hore funguje aj tak.";
+  }
+  hint.textContent = msg;
+  hint.hidden = !msg;
+}
+$("#notif").addEventListener("click", async () => {
+  notifOn = !notifOn;
+  if(notifOn){
+    localStorage.setItem(NKEY, "1");
+    try{
+      if("Notification" in window && Notification.permission === "default") await Notification.requestPermission();
+    }catch(e){}
+  }else{
+    localStorage.removeItem(NKEY);
+  }
+  paintNotif();
+});
+notifOn = localStorage.getItem(NKEY) === "1";
 paintNotif();
 
 if(token){ $("#app").hidden = false; load(); } else { $("#gate").hidden = false; }
