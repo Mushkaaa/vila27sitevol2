@@ -7,6 +7,7 @@
    order: kategória sa dá objednať online (rozvoz / odber)
    item.order === false  → položka sa zobrazí v lístku, ale nedá sa objednať
    item.orderOnly === true → len v objednávke (nie v tlačenom lístku)
+   cat.orderNote → poznámka zobrazená len v objednávke (namiesto cat.note)
    item.addons / addonGroups → doplnky ponúkané pri objednávke
    item.menuAddons / cat.extras → doplnky zobrazené v lístku
    ========================================================= */
@@ -1094,49 +1095,57 @@
     "cat": "Nealko",
     "kind": "drink",
     "order": true,
+    "orderNote": "Na rozvoz a odber ponúkame nealko v 0,5l fľašiach.",
     "items": [
       {
         "id": "ne1",
         "name": "Coca-Cola, Zero",
         "w": "0,33l",
-        "price": 2.7
+        "price": 2.7,
+        "order": false
       },
       {
         "id": "ne2",
         "name": "Fanta",
         "w": "0,33l",
-        "price": 2.7
+        "price": 2.7,
+        "order": false
       },
       {
         "id": "ne3",
         "name": "Sprite",
         "w": "0,33l",
-        "price": 2.7
+        "price": 2.7,
+        "order": false
       },
       {
         "id": "ne4",
         "name": "Tonic, Zázvor, Rosé",
         "w": "0,25l",
         "price": 2.7,
-        "alg": "E150d"
+        "alg": "E150d",
+        "order": false
       },
       {
         "id": "ne5",
         "name": "Ľadový čaj",
         "w": "0,25l",
-        "price": 2.7
+        "price": 2.7,
+        "order": false
       },
       {
         "id": "ne6",
         "name": "Cappy džús",
         "w": "0,25l",
-        "price": 2.7
+        "price": 2.7,
+        "order": false
       },
       {
         "id": "ne7",
         "name": "Römerquelle",
         "w": "0,33l",
-        "price": 2.7
+        "price": 2.7,
+        "order": false
       },
       {
         "id": "ne8",
@@ -1150,7 +1159,8 @@
         "id": "ne9",
         "name": "Red Bull plech",
         "w": "0,25l",
-        "price": 3.5
+        "price": 3.5,
+        "order": false
       },
       {
         "id": "ne10",
@@ -1158,6 +1168,27 @@
         "w": "0,10l",
         "price": 0.5,
         "order": false
+      },
+      {
+        "id": "ne11",
+        "name": "Coca-Cola",
+        "w": "0,5l",
+        "price": 3.0,
+        "orderOnly": true
+      },
+      {
+        "id": "ne12",
+        "name": "Fuze Tea jahoda & aloe vera",
+        "w": "0,5l",
+        "price": 3.0,
+        "orderOnly": true
+      },
+      {
+        "id": "ne13",
+        "name": "Römerquelle sýtená",
+        "w": "0,5l",
+        "price": 3.0,
+        "orderOnly": true
       }
     ]
   },

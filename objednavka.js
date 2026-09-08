@@ -9,7 +9,7 @@
 
   /* len kategórie a položky, ktoré sa dajú objednať */
   var MENU = M.MENU.filter(function (c) { return c.order; }).map(function (c) {
-    return { id: c.id, cat: c.cat, note: c.note || "", items: c.items.filter(function (i) { return i.order !== false; }) };
+    return { id: c.id, cat: c.cat, note: c.orderNote || c.note || "", items: c.items.filter(function (i) { return i.order !== false; }) };
   });
   var PIZZA_IDS = new Set((MENU.find(function (g) { return g.id === "pizza"; }) || { items: [] }).items.map(function (i) { return i.id; }));
 
@@ -188,6 +188,7 @@
         flash("Ďakujeme, " + payload.customer.name.split(" ")[0] + ". Objednávka č. " + r.data.number + " je prijatá – " +
           (payload.mode === "rozvoz" ? "kuriér vám zavolá z čísla +421 910 201 271." : "ozveme sa na " + payload.customer.phone + "."), 7000, true);
         cart = []; f.reset(); closeOrder(); render();
+        window.scrollTo({ top: 0, behavior: "smooth" });
       })
       .catch(function (err) {
         var why = err.name === "TypeError" ? "nie je pripojenie k serveru" : err.message;
