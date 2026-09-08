@@ -221,9 +221,9 @@
       boxes.forEach(function (b) { if (!b.checked) b.disabled = checked >= max; });
     });
   }
-  var optRow = function (name, price, type, extra) {
-    return '<label class="top-opt"><input type="' + (type || "checkbox") + '" class="top-cb" data-name="' + esc(name) + '" data-price="' + price + '"' + (extra || "") + '>' +
-           '<span class="tname">' + esc(name) + '</span><span class="m-price">' + (price > 0 ? "+ " + eur(price) : (type === "radio" ? "zdarma" : "")) + '</span></label>';
+  var optRow = function (name, price) {
+    return '<label class="top-opt"><input type="checkbox" class="top-cb" data-name="' + esc(name) + '" data-price="' + price + '">' +
+           '<span class="tname">' + esc(name) + '</span><span class="m-price">' + (price > 0 ? "+ " + eur(price) : "zdarma") + '</span></label>';
   };
   var groupBlock = function (g) {
     var head = (g.title || g.max)
@@ -240,11 +240,7 @@
     $("topFor").textContent = displayName(it) + " · " + eur(it.price);
 
     if (isPizza) {
-      var base = it.buildYourOwn
-        ? '<div class="top-group"><div class="top-group-head"><span>Základ</span><span class="top-alg">vyberte jeden</span></div>' +
-          optRow("paradajková omáčka", 0, "radio", ' name="pizzaBase" checked') + optRow("smotanový základ", 0, "radio", ' name="pizzaBase"') + '</div>'
-        : "";
-      $("topBody").innerHTML = base +
+      $("topBody").innerHTML =
         TOPPINGS.map(function (gr) {
           return '<div class="top-group"><div class="top-group-head"><span>' + esc(gr.g) + ' · ' + eur(gr.price) + '</span>' +
                  (gr.alg ? '<span class="top-alg">alergény: ' + esc(gr.alg) + '</span>' : "") + '</div>' +

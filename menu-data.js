@@ -227,18 +227,17 @@
             "options": [
               {
                 "name": "0,1l syrová omáčka",
-                "price": 0
+                "price": 2.0
               },
               {
                 "name": "0,1l demi-glace omáčka",
-                "price": 0
+                "price": 2.0
               }
             ]
           },
           {
             "title": "Príloha",
             "max": 2,
-            "note": "Pri výbere 2 príloh dostanete každú v polovičnej porcii (50/50).",
             "options": [
               {
                 "name": "Zemiakové hranolky",
@@ -272,18 +271,17 @@
             "options": [
               {
                 "name": "0,1l syrová omáčka",
-                "price": 0
+                "price": 2.0
               },
               {
                 "name": "0,1l demi-glace omáčka",
-                "price": 0
+                "price": 2.0
               }
             ]
           },
           {
             "title": "Príloha",
             "max": 2,
-            "note": "Pri výbere 2 príloh dostanete každú v polovičnej porcii (50/50).",
             "options": [
               {
                 "name": "Zemiakové hranolky",
@@ -377,10 +375,25 @@
         "price": 13.9,
         "desc": "hovädzie mäso, Jack Daniels omáčka, červená cibuľa, slaninový džem, paradajka, syr Cheddar, listový šalát, majonéza, hranolky, tatárska omáčka",
         "alg": "lepok, mlieko, vajcia, sezamové semená",
-        "addons": [
+        "addonGroups": [
           {
-            "name": "King size",
-            "price": 3.0
+            "title": "Mäso",
+            "max": 1,
+            "options": [
+              {
+                "name": "Syr Halloumi namiesto hovädzieho mäsa",
+                "price": 0
+              }
+            ]
+          },
+          {
+            "title": "Doplnky",
+            "options": [
+              {
+                "name": "King size",
+                "price": 3.0
+              }
+            ]
           }
         ]
       },
@@ -391,10 +404,25 @@
         "price": 13.9,
         "desc": "hovädzie mäso, Jalapeňos omáčka, červená cibuľa, slaninový džem, slanina, paradajka, listový šalát, majonéza, hranolky, tatárska omáčka",
         "alg": "lepok, mlieko, vajcia, sezamové semená",
-        "addons": [
+        "addonGroups": [
           {
-            "name": "King size",
-            "price": 3.0
+            "title": "Mäso",
+            "max": 1,
+            "options": [
+              {
+                "name": "Syr Halloumi namiesto hovädzieho mäsa",
+                "price": 0
+              }
+            ]
+          },
+          {
+            "title": "Doplnky",
+            "options": [
+              {
+                "name": "King size",
+                "price": 3.0
+              }
+            ]
           }
         ]
       },
@@ -564,15 +592,6 @@
         "desc": "paradajková omáčka, mozzarella, saláma pepperoni, červená cibuľa, bylinky",
         "alg": "lepok, mlieko",
         "no": 16
-      },
-      {
-        "id": "pzOwn",
-        "name": "Poskladaj si vlastnú pizzu",
-        "w": "",
-        "price": 8.4,
-        "desc": "cesto, mozzarella a bylinky — základ a doplnky podľa seba",
-        "orderOnly": true,
-        "buildYourOwn": true
       }
     ]
   },
