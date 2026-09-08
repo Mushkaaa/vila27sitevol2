@@ -5,7 +5,8 @@
  */
 const store = require('./_store');
 
-const DELIVERY_FEE = 2.50;
+const { DELIVERY_ZONES } = require('../menu-data.js');
+const zoneFor = v => DELIVERY_ZONES.find(z => z.villages.includes(v)) || null;
 
 const txt = (v, max = 200) => String(v ?? '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, max);
 const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
@@ -27,6 +28,11 @@ module.exports = async (req, res) => {
     }
 
     const mode = body.mode === 'odber' ? 'odber' : 'rozvoz';
+    const village = mode === 'rozvoz' ? txt(c.village, 60) : '';
+    const zone = mode === 'rozvoz' ? zoneFor(village) : null;
+    if (mode === 'rozvoz' && !zone) {
+      return res.status(400).json({ ok: false, error: 'Vyberte obec doručenia' });
+    }
     if (mode === 'rozvoz' && !txt(c.address)) {
       return res.status(400).json({ ok: false, error: 'Chýba adresa doručenia' });
     }
@@ -45,7 +51,10 @@ module.exports = async (req, res) => {
     });
 
     const subtotal = round(cleanItems.reduce((s, i) => s + i.lineTotal, 0));
-    const fee = mode === 'rozvoz' ? DELIVERY_FEE : 0;
+    if (zone && subtotal < zone.min) {
+      return res.status(400).json({ ok: false, error: `Minimálna objednávka pre obec ${village} je ${zone.min.toFixed(2)} € (bez dopravy)` });
+    }
+    const fee = zone ? zone.fee : 0;
     const total = round(subtotal + fee);
 
     const order = {
@@ -56,7 +65,8 @@ module.exports = async (req, res) => {
       customer: {
         name: txt(c.name, 80),
         phone: txt(c.phone, 40),
-        address: mode === 'rozvoz' ? txt(c.address, 160) : '',
+        address: mode === 'rozvoz' ? `${txt(c.address, 160)}, ${village}` : '',
+        village,
         time: txt(c.time, 60),
         pay: txt(c.pay, 60),
         note: txt(c.note, 400),

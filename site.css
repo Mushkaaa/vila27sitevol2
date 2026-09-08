@@ -301,6 +301,9 @@ body.nav-open .nav-actions .btn{visibility:hidden}
 .cart-foot .row{display:flex;justify-content:space-between;padding:4px 0;color:var(--grey);font-size:.95rem}
 .cart-foot .row.total{color:var(--black);font-weight:700;font-size:1.15rem;padding-top:10px;margin-top:6px;border-top:1px solid var(--rule)}
 .cart-foot .btn{margin-top:14px}
+.cart-foot .field{margin:2px 0 12px}
+.min-note{margin:8px 0 0;font-size:.85rem;color:var(--accent);font-weight:600}
+.min-note:empty{display:none}
 .cart-pill{display:none}
 .order-info{margin-top:16px;color:var(--grey);font-size:.9rem;padding:0 4px}
 .order-info b{color:var(--black);font-weight:600}

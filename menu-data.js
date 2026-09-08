@@ -335,7 +335,7 @@
       },
       {
         "id": "hj4",
-        "name": "BBQ Bravčové rebrá s baby opekanými zemiakmi a paradajkovo-citrónovou salzou",
+        "name": "BBQ Bravčové rebrá s baby opekanými zemiakmi a paradajkovo-citrónovou salsou",
         "w": "500/150g",
         "price": 15.5,
         "alg": "mlieko, zeler"
@@ -1286,9 +1286,19 @@
 ];
 
   var GLUTEN_FREE = { name: "Bezlepkové cesto", price: 2.00 };
-  var DELIVERY_FEE = 2.50;
 
-  var api = { MENU: MENU, TOPPINGS: TOPPINGS, GLUTEN_FREE: GLUTEN_FREE, DELIVERY_FEE: DELIVERY_FEE };
+  /* rozvozové zóny: fee = cena dopravy, min = minimálna objednávka (bez dopravy) */
+  var DELIVERY_ZONES = [
+    { fee: 0.50, min: 7,  villages: ["Bešeňová", "Ivachnová", "Liptovská Teplá", "Liptovský Michal", "Madočany"] },
+    { fee: 1.00, min: 15, villages: ["Kalameny", "Lúčky", "Potok", "Turík"] },
+    { fee: 1.50, min: 15, villages: ["Krmeš", "Lisková", "Liptovské Vlachy", "Partizánska Ľupča", "Vlašky"] },
+    { fee: 2.00, min: 15, villages: ["Bobrovník", "Bukovina", "Hliník", "Liptovská Anna", "Nižné Malatíny", "Vyšné Malatíny"] },
+    { fee: 2.50, min: 20, villages: ["Liptovské Sliače"] },
+    { fee: 3.00, min: 20, villages: ["Dúbrava", "Ižipovce", "Liptovské Kľačany", "Prosiek", "Ľubeľa"] },
+    { fee: 3.50, min: 25, villages: ["Gôtovany", "Liptovská Sielnica"] }
+  ];
+
+  var api = { MENU: MENU, TOPPINGS: TOPPINGS, GLUTEN_FREE: GLUTEN_FREE, DELIVERY_ZONES: DELIVERY_ZONES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;   // Node (api/, agent/)
   else root.VILA27_MENU = api;                                                    // prehliadač
 })(typeof window !== "undefined" ? window : this);

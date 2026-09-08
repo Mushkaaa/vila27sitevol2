@@ -3,7 +3,7 @@
   "use strict";
   var M = window.VILA27_MENU;
   var ORDER_API = "/api/orders";
-  var DELIVERY_FEE = M.DELIVERY_FEE;
+  var ZONES = M.DELIVERY_ZONES;
   var GLUTEN_FREE = M.GLUTEN_FREE;
   var TOPPINGS = M.TOPPINGS;
 
@@ -20,6 +20,20 @@
 
   var cart = [];          // [{key,id,name,base,extras:[{name,price}],gf,qty}]
   var mode = "rozvoz";
+  var village = "";       // vybraná obec doručenia
+
+  var zoneFor = function (v) {
+    return ZONES.find(function (z) { return z.villages.indexOf(v) !== -1; }) || null;
+  };
+
+  /* dropdown obcí – skupiny podľa ceny dopravy a minimálnej objednávky */
+  var villageSel = $("f-village");
+  villageSel.innerHTML = '<option value="">Vyberte obec…</option>' + ZONES.map(function (z) {
+    return '<optgroup label="Doprava ' + eur(z.fee) + ' · min. objednávka ' + eur(z.min) + '">' +
+      z.villages.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join("") +
+      '</optgroup>';
+  }).join("");
+  villageSel.addEventListener("change", function () { village = villageSel.value; render(); });
 
   /* ---- vykreslenie ponuky ---- */
   var menuCol = $("menuCol");
@@ -82,14 +96,28 @@
       }).join("");
     }
     var count = cart.reduce(function (n, e) { return n + e.qty; }, 0);
-    var fee = (mode === "rozvoz" && sub > 0) ? DELIVERY_FEE : 0;
+    var zone = mode === "rozvoz" ? zoneFor(village) : null;
+    var fee = (zone && sub > 0) ? zone.fee : 0;
     $("pillCount").textContent = count;
     $("subtotal").textContent = eur(sub);
+    $("villageField").style.display = (mode === "rozvoz") ? "block" : "none";
     $("feeRow").style.display = (mode === "rozvoz") ? "flex" : "none";
-    $("fee").textContent = eur(fee);
+    $("fee").textContent = zone ? eur(zone.fee) : "podľa obce";
     $("total").textContent = eur(sub + fee);
     $("orderTotal").textContent = eur(sub + fee);
-    $("checkoutBtn").disabled = !cart.length;
+
+    var note = "", blocked = false;
+    if (mode === "rozvoz" && cart.length) {
+      if (!zone) {
+        note = "Vyberte obec doručenia – podľa nej sa určí cena dopravy a minimálna objednávka.";
+        blocked = true;
+      } else if (sub < zone.min) {
+        note = "Minimálna objednávka pre obec " + village + " je " + eur(zone.min) + " (bez dopravy) – chýba " + eur(zone.min - sub) + ".";
+        blocked = true;
+      }
+    }
+    $("minNote").textContent = note;
+    $("checkoutBtn").disabled = !cart.length || blocked;
   }
 
   /* ---- udalosti ---- */
@@ -115,6 +143,7 @@
   var closeOrder = function () { orderModal.classList.remove("show"); };
   $("checkoutBtn").addEventListener("click", function () {
     if (!cart.length) return;
+    if (mode === "rozvoz") $("addrLabel").textContent = "Ulica a číslo · " + village;
     orderModal.classList.add("show");
     $("f-name").focus();
   });
@@ -128,6 +157,7 @@
     e.preventDefault();
     var f = e.target, el = f.elements, btn = f.querySelector('button[type="submit"]');
     if (btn.disabled) return;
+    if (mode === "rozvoz" && !zoneFor(village)) { flash("Vyberte obec doručenia v košíku.", 5000, true); return; }
     var label = btn.textContent;
     btn.disabled = true; btn.textContent = "Odosielam…";
 
@@ -136,6 +166,7 @@
       customer: {
         name: el.name.value.trim(),
         phone: el.phone.value.trim(),
+        village: mode === "rozvoz" ? village : "",
         address: mode === "rozvoz" ? el.address.value.trim() : "",
         time: el.time.value,
         pay: el.pay.value,

@@ -467,9 +467,11 @@ order_page = head("Objednať jedlo online — Vila 27, Bešeňová",
       </div>
       <div class="cart-body" id="cartBody"></div>
       <div class="cart-foot">
+        <div class="field" id="villageField"><label for="f-village">Obec doručenia</label><select id="f-village"></select></div>
         <div class="row"><span>Medzisúčet</span><span id="subtotal">0,00 €</span></div>
-        <div class="row" id="feeRow"><span>Doprava</span><span id="fee">2,50 €</span></div>
+        <div class="row" id="feeRow"><span>Doprava</span><span id="fee">podľa obce</span></div>
         <div class="row total"><span>Spolu</span><span id="total">0,00 €</span></div>
+        <p class="min-note" id="minNote"></p>
         <button class="btn btn-block" id="checkoutBtn" disabled>Pokračovať k objednávke</button>
       </div>
     </div>
@@ -493,7 +495,7 @@ order_page = head("Objednať jedlo online — Vila 27, Bešeňová",
         <div class="field"><label for="f-name">Meno a priezvisko</label><input id="f-name" required name="name" autocomplete="name" /></div>
         <div class="field"><label for="f-phone">Telefón</label><input id="f-phone" required name="phone" type="tel" autocomplete="tel" placeholder="+421 …" /></div>
       </div>
-      <div class="field" id="addrField"><label for="f-addr">Adresa doručenia</label><input id="f-addr" name="address" autocomplete="street-address" placeholder="Ulica a číslo, obec" /></div>
+      <div class="field" id="addrField"><label for="f-addr" id="addrLabel">Ulica a číslo</label><input id="f-addr" name="address" autocomplete="street-address" placeholder="Ulica a číslo domu" /></div>
       <div class="grid2">
         <div class="field"><label for="f-time">Čas</label>
           <select id="f-time" name="time">
