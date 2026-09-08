@@ -473,7 +473,7 @@ order_page = head("Objednať jedlo online — Vila 27, Bešeňová",
         <button class="btn btn-block" id="checkoutBtn" disabled>Pokračovať k objednávke</button>
       </div>
     </div>
-    <p class="order-info">Objednávky prijímame denne <b>{HOURS}</b>. Platba v hotovosti alebo kartou pri prevzatí. Otázky: <a href="{PHONE_HREF}"><b>{PHONE}</b></a>.</p>
+    <p class="order-info">Objednávky prijímame denne <b>{HOURS}</b>. Platba v hotovosti alebo kartou pri prevzatí. Kuriér vám pri rozvoze zavolá z čísla <a href="tel:+421910201271"><b>+421 910 201 271</b></a>. Otázky: <a href="{PHONE_HREF}"><b>{PHONE}</b></a>.</p>
   </aside>
 </div>
 <button class="cart-pill" id="cartPill" type="button">Košík <b id="pillCount">0</b></button>

@@ -154,7 +154,8 @@
       })
       .then(function (r) {
         if (!r.res.ok || !r.data.ok) throw new Error(r.data.error || "Server neprijal objednávku");
-        flash("Ďakujeme, " + payload.customer.name.split(" ")[0] + ". Objednávka č. " + r.data.number + " je prijatá – ozveme sa na " + payload.customer.phone + ".", 7000, true);
+        flash("Ďakujeme, " + payload.customer.name.split(" ")[0] + ". Objednávka č. " + r.data.number + " je prijatá – " +
+          (payload.mode === "rozvoz" ? "kuriér vám zavolá z čísla +421 910 201 271." : "ozveme sa na " + payload.customer.phone + "."), 7000, true);
         cart = []; f.reset(); closeOrder(); render();
       })
       .catch(function (err) {
