@@ -76,6 +76,23 @@ const kopia = x => JSON.parse(JSON.stringify(x));
 
 const jeZoznam = z => ZOZNAMY.includes(z);
 
+/**
+ * Jednorazová oprava: staršie uloženie zmazalo gramáž v tvare „400/150g“.
+ * Doplní ju z menu.json a raz uloží, potom sa už nespúšťa.
+ */
+async function opravVahy(zoznam, data) {
+  const kluc = `vila27:oprava:vaha:${zoznam}`;
+  if (await store.get(kluc)) return data;
+  const povodne = new Map(zoSuboru()[zoznam].flatMap(c => c.items.map(i => [i.id, i.weight])));
+  data.forEach(c => c.items.forEach(i => {
+    const w = povodne.get(i.id);
+    if (w && w.text && w.text.includes('/') && !(i.weight && i.weight.text)) i.weight = { ...w };
+  }));
+  await store.set(KLUC(zoznam), JSON.stringify(data));
+  await store.set(kluc, '1');
+  return data;
+}
+
 /** Kategórie jedného zoznamu. Redis → menu.json. */
 async function nacitaj(zoznam) {
   if (!jeZoznam(zoznam)) throw new Error('Neznámy zoznam: ' + zoznam);
@@ -83,7 +100,7 @@ async function nacitaj(zoznam) {
     const raw = await store.get(KLUC(zoznam));
     if (raw) {
       const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (Array.isArray(data) && data.length) return data;
+      if (Array.isArray(data) && data.length) return await opravVahy(zoznam, data);
     }
   } catch (e) {
     console.error('Menu z Redisu sa nepodarilo načítať, beriem menu.json:', e.message);

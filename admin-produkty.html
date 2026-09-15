@@ -293,7 +293,7 @@
         <div class="field"><label for="p-kat">Kategória</label><select id="p-kat"></select></div>
       </div>
       <div class="dvojica">
-        <div class="field"><label for="p-vaha">Gramáž</label><input id="p-vaha" inputmode="decimal" placeholder="napr. 350" /></div>
+        <div class="field"><label for="p-vaha">Gramáž</label><input id="p-vaha" placeholder="napr. 350 alebo 400/150" /></div>
         <div class="field"><label for="p-jednotka">Jednotka</label>
           <select id="p-jednotka">
             <option value="g">g – gramy</option>
@@ -670,7 +670,10 @@ function otvorProdukt(produkt, catId){
   $("#pChyba").textContent = "";
   $("#p-nazov").value = produkt ? produkt.name : "";
   $("#p-cena").value = produkt ? String(produkt.price).replace(".", ",") : "";
-  $("#p-vaha").value = produkt && produkt.weight && produkt.weight.value != null ? String(produkt.weight.value).replace(".", ",") : "";
+  const w = produkt && produkt.weight || {};
+  // staršie položky „400/150g“ majú value prázdne – číslo sa vytiahne z textu
+  const zText = /^\s*(\d+(?:,\d+)?\/\d+(?:,\d+)?)\s*g\s*$/.exec(w.text || "");
+  $("#p-vaha").value = w.value != null ? String(w.value).replace(".", ",") : (zText ? zText[1] : "");
   $("#p-jednotka").value = produkt && produkt.weight && produkt.weight.unit ? produkt.weight.unit : "g";
   $("#p-popis").value = produkt ? (produkt.desc || "") : "";
   $("#p-poradie").value = produkt && produkt.sort != null ? produkt.sort : "";
@@ -698,8 +701,10 @@ function ulozProdukt(){
   if (!Number.isFinite(cena) || cena < 0){ chyba.textContent = "Cena musí byť kladné číslo."; return; }
   let vaha = null;
   if (vahaText){
-    vaha = Number(vahaText.replace(",", "."));
-    if (!Number.isFinite(vaha) || vaha <= 0){ chyba.textContent = "Gramáž musí byť kladné číslo."; return; }
+    // „350“ alebo „400/150“ (jedlo/príloha)
+    if (!/^\d+([.,]\d+)?(\/\d+([.,]\d+)?)?$/.test(vahaText)){ chyba.textContent = "Gramáž musí byť číslo, prípadne v tvare 400/150."; return; }
+    vaha = vahaText.includes("/") ? vahaText.replace(/\./g, ",") : Number(vahaText.replace(",", "."));
+    if (vaha === 0){ chyba.textContent = "Gramáž musí byť kladné číslo."; return; }
   }
   const ciel = kategorie().find(c => c.id === catId);
   if (!ciel){ chyba.textContent = "Vyberte kategóriu."; return; }

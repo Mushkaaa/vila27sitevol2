@@ -41,9 +41,17 @@ function skontrolujProdukt(vstup, obsadeneId, povodne) {
   const vaha = vstup.weight || {};
   const jednotka = JEDNOTKY.includes(vaha.unit) ? vaha.unit : 'g';
   let hodnota = null;
+  // staršie „400/150g“ majú value prázdne a údaj len v texte – bez tohto by ho uloženie zmazalo
+  const zText = /^\s*(\d+(?:,\d+)?\/\d+(?:,\d+)?)\s*g\s*$/.exec(vaha.text || '');
+  if ((vaha.value === '' || vaha.value == null) && zText) vaha.value = zText[1];
   if (vaha.value !== '' && vaha.value != null) {
-    hodnota = Number(String(vaha.value).replace(',', '.'));
-    if (!Number.isFinite(hodnota) || hodnota <= 0) return { chyba: 'Gramáž musí byť kladné číslo.' };
+    const s = String(vaha.value).trim();
+    // „400/150“ = jedlo/príloha – ostáva ako text
+    if (/^\d+([.,]\d+)?\/\d+([.,]\d+)?$/.test(s)) hodnota = s.replace(/\./g, ',');
+    else {
+      hodnota = Number(s.replace(',', '.'));
+      if (!Number.isFinite(hodnota) || hodnota <= 0) return { chyba: 'Gramáž musí byť kladné číslo alebo v tvare 400/150.' };
+    }
   }
 
   const alergeny = Array.isArray(vstup.allergens) ? vstup.allergens : [];
