@@ -11,7 +11,7 @@
   var eur = function (n) { return n.toFixed(2).replace(".", ",") + " €"; };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); };
   var $ = function (id) { return document.getElementById(id); };
-  var displayName = function (it) { return (it.no ? it.no + ". " : "") + it.name; };
+  var displayName = function (it) { return it.name; };
   var vaha = function (it) { return it.weight && it.weight.text ? it.weight.text : ""; };
 
   var cart = [];          // [{key,id,name,base,extras:[{name,price}],gf,qty}]
