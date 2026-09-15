@@ -3,8 +3,8 @@
  * GET /api/menu – jedálny lístok a rozvozová ponuka pre verejné stránky.
  *
  * Vracia len položky, ktoré sú zapnuté – vypnuté sa k zákazníkovi vôbec
- * nedostanú. Odpoveď drží CDN 5 minút, aby bežná návštevnosť nechodila
- * zakaždým do Redisu.
+ * nedostanú. Odpoveď drží CDN minútu, aby bežná návštevnosť nechodila
+ * zakaždým do Redisu, ale úprava ponuky sa prejavila rýchlo.
  */
 const menu = require('./_menu');
 
@@ -17,7 +17,9 @@ module.exports = async (req, res) => {
       menu.nacitaj('jedalnylistok'),
     ]);
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    // Krátko, nech sa úprava ponuky prejaví na stránke do minúty. Zvyšok
+    // návštevnosti aj tak odchytí CDN, do Redisu sa chodí nanajvýš raz za minútu.
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     return res.status(200).json({
       ok: true,
       rozvoz: menu.ibaOnline(rozvoz),

@@ -75,7 +75,7 @@
   .field .hint{font-size:.76rem;color:var(--grey);margin-top:3px}
 
   /* ---------- obsah ---------- */
-  .obal{max-width:1000px;margin:0 auto;padding:20px 20px 90px}
+  .obal{max-width:1000px;margin:0 auto;padding:20px 20px 32px}
   .hlava{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:6px}
   .hlava h2{font-size:1.6rem}
   .hlava p{color:var(--grey);font-size:.92rem;flex-basis:100%}
@@ -88,6 +88,12 @@
     padding:.6rem 1.1rem;font-weight:700;min-height:var(--tap);
   }
   .btn-druhy:hover{background:var(--paper-2)}
+
+  .varovanie{
+    margin-top:18px;padding:12px 14px;border-left:4px solid var(--accent);
+    background:#F6E9E6;font-size:.9rem;border-radius:2px;line-height:1.5;
+  }
+  .varovanie b{display:block;margin-bottom:2px}
 
   .kat{margin-top:26px;border-top:2px solid var(--ink);padding-top:10px}
   .kat-hlava{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
@@ -160,8 +166,9 @@
   .zaloha-riadok button{background:transparent;border-color:var(--line);padding:.35rem .8rem;font-size:.8rem;font-weight:700}
   .zaloha-riadok button:hover{background:var(--paper-2)}
 
+  /* posunie sa nad lištu zmien, nech sa neprekrývajú */
   .oznam{
-    position:fixed;left:50%;bottom:24px;transform:translate(-50%,14px);z-index:70;
+    position:fixed;left:50%;bottom:var(--oznam-dno,24px);transform:translate(-50%,14px);z-index:70;
     background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:3px;
     font-size:.92rem;opacity:0;visibility:hidden;transition:opacity .18s,transform .18s,visibility 0s .18s;
     max-width:calc(100% - 40px);
@@ -186,11 +193,6 @@
   .lista .uloz{background:var(--paper);color:var(--ink);border-color:var(--paper)}
   .lista .uloz:hover{background:#fff}
   .lista .uloz:disabled{opacity:.5;cursor:default}
-  .lista .rozpis{
-    flex-basis:100%;margin:0;padding:10px 0 2px;border-top:1px solid var(--rule);
-    color:var(--paper);font-size:.88rem;line-height:1.6;
-  }
-  .lista .rozpis span{display:inline-block;margin-right:14px}
 
   .neulozene{
     display:inline-block;margin-left:8px;padding:.12rem .45rem;border-radius:2px;
@@ -203,7 +205,7 @@
     .bar h1,.cas{display:none}
     .tabs{order:3;flex-basis:100%}
     .tabs button{flex:1}
-    .obal{padding:16px 14px 80px}
+    .obal{padding:16px 14px 24px}
     .lista{padding:10px 14px;gap:8px}
     .lista .co{display:none}
     .lista button{flex:1}
@@ -239,8 +241,8 @@
     <svg class="logo" viewBox="10 5 160 100" aria-label="Vila 27"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg>
     <h1>Správa ponuky</h1>
     <div class="tabs" role="group" aria-label="Ktorú ponuku upravujem">
-      <button type="button" class="on" data-zoznam="rozvoz">Rozvoz</button>
-      <button type="button" data-zoznam="jedalnylistok">Jedálny lístok</button>
+      <button type="button" class="on" data-zoznam="rozvoz">Rozvoz<span class="neulozene" hidden>zmeny</span></button>
+      <button type="button" data-zoznam="jedalnylistok">Jedálny lístok<span class="neulozene" hidden>zmeny</span></button>
     </div>
     <span class="spacer"></span>
     <span class="cas" id="odpocet"></span>
@@ -256,6 +258,12 @@
       <p id="podnadpis"></p>
     </div>
     <button type="button" class="btn-druhy" id="novaKatBtn">Pridať kategóriu</button>
+    <p class="varovanie" id="bezDatabazy" hidden>
+      <b>Pozor: nie je nastavená databáza.</b>
+      Zmeny sa nemajú kam natrvalo uložiť – po chvíli sa stratia a na stránke sa
+      nemusia prejaviť vôbec. Na Verceli pridajte úložisko Upstash Redis
+      (Storage → Upstash Redis) a stránku nasaďte znova.
+    </p>
     <div id="vypis"></div>
   </div>
 
@@ -264,7 +272,6 @@
     <span class="co" id="lCo"></span>
     <button type="button" class="zahod" id="zahodBtn">Zahodiť</button>
     <button type="button" class="uloz" id="ulozBtn">Uložiť zmeny</button>
-    <p class="rozpis" id="lRozpis" hidden></p>
   </div>
 </div>
 
@@ -472,24 +479,37 @@ function rozdiel(z){
 function oznacZmeny(){
   const vsetky = ZOZNAMY.flatMap(z => rozdiel(z).map(t => ({ z, t })));
   const pocet = vsetky.length;
+  const lista = $("#lista");
 
-  $("#lista").hidden = pocet === 0;
+  // lišta má stále rovnakú výšku – nič sa pod ňou nehýbe, keď pribudne zmena
+  lista.hidden = pocet === 0;
   $("#ulozBtn").disabled = pocet === 0;
   if (pocet){
     $("#lPocet").textContent = zmenyText(pocet);
     $("#lCo").textContent = vsetky.slice(0, 3).map(x => x.t).join(", ") + (pocet > 3 ? " a ďalšie…" : "");
-    const rozpis = $("#lRozpis");
-    rozpis.hidden = pocet <= 3;
-    if (pocet > 3) rozpis.innerHTML = vsetky.map(x => `<span>${esc(x.t)}</span>`).join("");
   }
+  miestoPreListu();
 
-  // na záložke, ktorá má zmeny, nech je to vidieť aj keď je otvorená tá druhá
+  // na záložke so zmenami je to vidieť, aj keď je otvorená tá druhá;
+  // popisky sa neprepisujú, len sa prepína značka – inak by blikali
   document.querySelectorAll(".tabs button").forEach(b => {
     const z = b.dataset.zoznam;
-    b.innerHTML = esc(NAZOV[z]) + (zmeneny(z) ? '<span class="neulozene">zmeny</span>' : "");
     b.classList.toggle("on", z === zoznam);
+    const znacka = b.querySelector(".neulozene");
+    if (znacka) znacka.hidden = !zmeneny(z);
   });
 }
+
+/** Lišta je fixná, tak jej pod obsahom vyhradíme presne toľko, koľko zaberá. */
+function miestoPreListu(){
+  const lista = $("#lista");
+  const obal = document.querySelector(".obal");
+  if (!obal) return;
+  const vyska = lista.hidden ? 0 : lista.offsetHeight;
+  obal.style.paddingBottom = vyska ? (vyska + 28) + "px" : "";
+  document.documentElement.style.setProperty("--oznam-dno", (vyska ? vyska + 16 : 24) + "px");
+}
+addEventListener("resize", miestoPreListu);
 
 /* ---------- vykreslenie zoznamu ---------- */
 function riadok(p){
@@ -536,6 +556,7 @@ async function nacitaj(z){
   const odpoved = await api("/api/admin-menu", { akcia: "nacitaj", zoznam: z });
   ALERGENY = odpoved.alergeny || ALERGENY;
   data[z] = { povodne: kopia(odpoved.kategorie), teraz: kopia(odpoved.kategorie) };
+  $("#bezDatabazy").hidden = odpoved.trvale !== false;
 }
 
 /* ---------- uloženie všetkého naraz ---------- */
@@ -554,7 +575,7 @@ async function publikuj(){
     });
     sessionStorage.removeItem(DRAFT);
     vykresli();
-    oznam("Zmeny sú uložené a hneď platia na stránke.");
+    oznam("Zmeny sú uložené. Na stránke sa prejavia do minúty.");
   }catch(e){
     if (e.message !== "401") oznam(e.message);
   }finally{

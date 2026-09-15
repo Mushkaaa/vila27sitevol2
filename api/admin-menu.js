@@ -9,6 +9,7 @@
  */
 const auth = require('./_auth');
 const menu = require('./_menu');
+const store = require('./_store');
 
 const text = (v, max = 200) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 const round = n => Math.round(n * 100) / 100;
@@ -183,7 +184,9 @@ module.exports = async (req, res) => {
     const kategorie = await menu.nacitaj(zoznam);
 
     if (akcia === 'nacitaj') {
-      return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY });
+      // bez databázy si každé volanie funkcie drží vlastnú pamäť – úpravy by sa
+      // navonok nikdy neprejavili, a to musí majiteľ vedieť
+      return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY, trvale: store.hasRedis });
     }
 
     // ---- nová kategória ----
