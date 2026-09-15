@@ -1,12 +1,12 @@
 'use strict';
 /**
  * Odoslanie surových ESC/POS bajtov do tlačiarne.
- * Štyri režimy – vyber v config.json podľa toho, ako máš tlačiareň zapojenú:
+ * Dva režimy – vyber v config.json podľa toho, ako máš tlačiareň zapojenú:
  *
- *  "tcp"      – tlačiareň v sieti (LAN kábel), port 9100.  ODPORÚČANÉ.
+ *  "tcp"      – tlačiareň v sieti (LAN kábel), port 9100.
  *  "windows"  – USB tlačiareň nainštalovaná vo Windows a zdieľaná pod menom.
- *  "command"  – Linux/macOS: pošle bajty do `lp -d NAZOV -o raw`.
- *  "file"     – nič netlačí, uloží bajty do súboru (na ladenie).
+ *
+ * Ladenie bez papiera: node test-print.js --nahlad
  */
 const net = require('net');
 const fs = require('fs');
@@ -46,28 +46,10 @@ function printWindowsShare(data, { share }) {
   });
 }
 
-function printCommand(data, { command }) {
-  return new Promise((resolve, reject) => {
-    const p = spawn('sh', ['-c', command]);
-    let err = '';
-    p.stderr.on('data', d => err += d);
-    p.on('close', code => code === 0 ? resolve() : reject(new Error(`príkaz skončil s kódom ${code} ${err}`)));
-    p.on('error', reject);
-    p.stdin.end(data);
-  });
-}
-
 async function print(data, cfg) {
   const mode = cfg.mode || 'tcp';
   if (mode === 'tcp') return printTcp(data, cfg.tcp || {});
   if (mode === 'windows') return printWindowsShare(data, cfg.windows || {});
-  if (mode === 'command') return printCommand(data, cfg.command || {});
-  if (mode === 'file') {
-    const out = (cfg.file && cfg.file.path) || './posledny-blocek.bin';
-    fs.writeFileSync(out, data);
-    console.log(`   (režim "file" – bajty uložené do ${out}, netlačí sa)`);
-    return;
-  }
   throw new Error(`Neznámy režim tlačiarne: ${mode}`);
 }
 

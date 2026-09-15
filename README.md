@@ -43,14 +43,11 @@ api/
   _store.js           – úložisko (Upstash Redis, s fallbackom do pamäte)
   _menu.js            – ponuka: Redis → menu.json, zálohy a vrátenie späť
   _auth.js            – sedenia majiteľa, cookie, porovnanie hesla
-_build/
-  build.py            – generuje statické stránky
-  migrate-menu.js     – jednorazový prevod pôvodného menu-data.js → menu.json
 agent/
   print-agent.js      – hlavný program, beží na PC v reštaurácii
   receipt.js          – rozloženie bločka (tu meň, ako bloček vyzerá)
   escpos.js           – ESC/POS príkazy + slovenská diakritika (CP852)
-  transport.js        – odoslanie do tlačiarne (LAN / USB / lp)
+  transport.js        – odoslanie do tlačiarne (LAN / USB)
   test-print.js       – testovacia tlač
   nahlad.js           – náhľad bločka v konzole (šetrí papier)
   config.json         – ⚠ tu nastav IP tlačiarne a token
@@ -143,8 +140,7 @@ Windows ich prepustí surovo (RAW) až do tlačiarne.
 Tlačiareň má aj Ethernet a je to o čosi menej krehké (nezáleží na tom, ktorý PC
 beží). Stačí zapojiť LAN, zistiť IP (vypni tlačiareň, podrž **FEED**, zapni —
 vytlačí self-test s IP), dať jej na routeri rezervovanú IP a v configu prehodiť
-`"mode": "tcp"` s tou IP. Na Linuxe/Raspberry je tam ešte `"mode": "command"`
-s `lp -d POS80 -o raw`.
+`"mode": "tcp"` s tou IP.
 
 ### Test bez servera
 

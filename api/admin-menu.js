@@ -3,7 +3,7 @@
  * POST /api/admin-menu – správa produktov pre majiteľa.
  *
  * Každé volanie najprv overí prihlásenie a až potom čokoľvek robí.
- * Akcie: nacitaj, uloz, zmaz, prepni, kategoria, zmazKategoriu, zalohy, obnov
+ * Akcie: nacitaj, ulozVsetko, zalohy, obnov
  *
  * Kontroly sú tu, nie v prehliadači – z prehliadača môže prísť čokoľvek.
  */
@@ -125,7 +125,6 @@ function skontrolujZony(vstup) {
   return { zony };
 }
 
-const najdiKategoriu = (kategorie, id) => kategorie.find(c => c.id === id);
 const NAZOV = { rozvoz: 'Rozvoz', jedalnylistok: 'Jedálny lístok' };
 
 /**
@@ -180,8 +179,6 @@ function skontrolujZoznam(vstup, stare) {
 
   return { kategorie };
 }
-
-module.exports.skontrolujZony = skontrolujZony;   // pre api/_menu.test.js
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -243,76 +240,6 @@ module.exports = async (req, res) => {
       // bez databázy si každé volanie funkcie drží vlastnú pamäť – úpravy by sa
       // navonok nikdy neprejavili, a to musí majiteľ vedieť
       return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY, modifikatory: menu.MODIFIKATORY, doprava: await menu.nacitajZony(), trvale: store.hasRedis });
-    }
-
-    // ---- nová kategória ----
-    if (akcia === 'kategoria') {
-      const nazov = text(body.nazov, 60);
-      if (!nazov) return res.status(400).json({ ok: false, error: 'Názov kategórie nesmie byť prázdny.' });
-      const obsadene = new Set(kategorie.map(c => c.id));
-      const id = jedineceId(nazov, obsadene);
-      const kind = body.kind === 'drink' ? 'drink' : 'food';
-      kategorie.push({ id, cat: nazov, kind, note: '', sort: kategorie.length, items: [] });
-      await menu.uloz(zoznam, kategorie, `nová kategória ${nazov}`);
-      return res.status(200).json({ ok: true, kategorie });
-    }
-
-    if (akcia === 'zmazKategoriu') {
-      const id = text(body.id, 60);
-      const k = najdiKategoriu(kategorie, id);
-      if (!k) return res.status(404).json({ ok: false, error: 'Kategória sa nenašla.' });
-      if (k.items.length) return res.status(400).json({ ok: false, error: 'Najprv presuňte alebo zmažte produkty v kategórii.' });
-      await menu.uloz(zoznam, kategorie.filter(c => c.id !== id), `zmazaná kategória ${k.cat}`);
-      return res.status(200).json({ ok: true, kategorie: await menu.nacitaj(zoznam) });
-    }
-
-    // ---- produkt ----
-    if (akcia === 'uloz') {
-      const catId = text(body.kategoria, 60);
-      const ciel = najdiKategoriu(kategorie, catId);
-      if (!ciel) return res.status(400).json({ ok: false, error: 'Vyberte kategóriu.' });
-
-      const vstup = body.produkt || {};
-      const povodneId = text(vstup.id, 60);
-      const obsadene = new Set(kategorie.flatMap(c => c.items.map(i => i.id)));
-
-      let povodne = null, staraKategoria = null;
-      if (povodneId) {
-        staraKategoria = kategorie.find(c => c.items.some(i => i.id === povodneId));
-        if (!staraKategoria) return res.status(404).json({ ok: false, error: 'Produkt sa nenašiel.' });
-        povodne = staraKategoria.items.find(i => i.id === povodneId);
-        obsadene.delete(povodneId);
-      }
-
-      const { chyba, produkt } = skontrolujProdukt(vstup, obsadene, povodne);
-      if (chyba) return res.status(400).json({ ok: false, error: chyba });
-
-      if (staraKategoria) staraKategoria.items = staraKategoria.items.filter(i => i.id !== produkt.id);
-      ciel.items.push(produkt);
-      ciel.items.sort((a, b) => (a.sort || 0) - (b.sort || 0));
-
-      await menu.uloz(zoznam, kategorie, `${povodne ? 'úprava' : 'nový produkt'} ${produkt.name}`);
-      return res.status(200).json({ ok: true, kategorie, id: produkt.id });
-    }
-
-    if (akcia === 'zmaz') {
-      const id = text(body.id, 60);
-      const k = kategorie.find(c => c.items.some(i => i.id === id));
-      if (!k) return res.status(404).json({ ok: false, error: 'Produkt sa nenašiel.' });
-      const nazov = k.items.find(i => i.id === id).name;
-      k.items = k.items.filter(i => i.id !== id);
-      await menu.uloz(zoznam, kategorie, `zmazaný ${nazov}`);
-      return res.status(200).json({ ok: true, kategorie });
-    }
-
-    if (akcia === 'prepni') {
-      const id = text(body.id, 60);
-      const k = kategorie.find(c => c.items.some(i => i.id === id));
-      if (!k) return res.status(404).json({ ok: false, error: 'Produkt sa nenašiel.' });
-      const p = k.items.find(i => i.id === id);
-      p.online = body.online === true;
-      await menu.uloz(zoznam, kategorie, `${p.online ? 'zapnutý' : 'vypnutý'} ${p.name}`);
-      return res.status(200).json({ ok: true, online: p.online });
     }
 
     return res.status(400).json({ ok: false, error: 'Neznáma akcia' });

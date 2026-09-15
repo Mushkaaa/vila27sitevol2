@@ -8,11 +8,7 @@
 
     "windows": { "share": "\\\\localhost\\POS80" },
 
-    "tcp": { "host": "192.168.1.87", "port": 9100 },
-
-    "command": { "command": "lp -d POS80 -o raw" },
-
-    "file": { "path": "./posledny-blocek.bin" }
+    "tcp": { "host": "192.168.1.87", "port": 9100 }
   },
 
   "receipt": {

@@ -33,15 +33,12 @@ Backend (`api/`, `agent/`, `vercel.json`) je bez zmeny.
 
 ## Na dokončenie
 1. **Fotky** sú hotlinkované z `https://www.vila27.sk/images/…` – skopíruj ich do `img/`
-   a v `_build/build.py` zmeň konštantu `IMG` (alebo Find & Replace v HTML).
-2. **Otváracie hodiny**: tu 11:00–21:30, pôvodný web uvádza 11:00–22:30 – konštanta `HOURS` v build.py
+   a v HTML nahraď adresu (Find & Replace).
+2. **Otváracie hodiny**: tu 11:00–21:30, pôvodný web uvádza 11:00–22:30
    (v HTML je na 3 miestach: hero, mobilné menu, pätička + objednávka a kontakt).
 3. **Omáčky k sous-vide**: v lístku 2,00 €, v objednávke boli v pôvodnej verzii zadarmo – nechané zadarmo
    (`addonGroups` v `menu-data.js`), over s majiteľom.
 4. Kontaktný formulár nič neodosiela – dorobiť (Vercel funkcia + e-mail, alebo Formspree).
-5. Lístok sa vykresľuje JavaScriptom; ak chceš statické HTML kvôli SEO, dá sa vygenerovať v build.py.
+5. Lístok sa vykresľuje JavaScriptom (statické HTML by pomohlo SEO).
 
-## Generátor stránok (voliteľné)
-Hlavička a pätička sú v každom HTML zduplikované. Ak meníš navigáciu alebo pätičku,
-uprav `_build/build.py` a spusti `python3 _build/build.py` v koreňi projektu (potrebuje Node).
-Stránky sa dajú upravovať aj priamo – generátor je len pohodlnosť.
+Hlavička a pätička sú v každom HTML zduplikované – pri zmene navigácie alebo pätičky uprav všetky stránky.

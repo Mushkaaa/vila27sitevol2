@@ -26,6 +26,19 @@
     window.matchMedia("(min-width: 901px)").addEventListener("change", function (e) { if (e.matches) setOpen(false); });
   }
 
+  /* sekcie sa jemne zobrazia pri prvom príchode do okna; bez JS / IntersectionObserver ostávajú viditeľné */
+  if ("IntersectionObserver" in window && matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -10% 0px" });
+    document.querySelectorAll(".section .ledger, .band .ledger, .contact-grid").forEach(function (el) {
+      el.classList.add("reveal");
+      io.observe(el);
+    });
+  }
+
   /* galéria → lightbox */
   var galleries = document.querySelectorAll(".gallery");
   if (galleries.length) {

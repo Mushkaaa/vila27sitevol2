@@ -1,4 +1,4 @@
-/* Vila 27 — objednávka online. Ponuku aj ceny berie zo servera (/api/menu);
+/* Vila 27 - objednávka online. Ponuku aj ceny berie zo servera (/api/menu);
    na server sa posielajú len id jedál a doplnkov, ceny si prepočíta sám. */
 (function () {
   "use strict";
@@ -68,7 +68,7 @@
     $("menuCol").innerHTML = html;
   }
 
-  /* dropdown obcí – skupiny podľa ceny dopravy a minimálnej objednávky */
+  /* dropdown obcí - skupiny podľa ceny dopravy a minimálnej objednávky */
   function naplnObce() {
     var sel = $("f-village");
     sel.innerHTML = '<option value="">Vyberte obec…</option>' + ZONES.map(function (z) {
@@ -134,10 +134,10 @@
     var note = "", blocked = false;
     if (mode === "rozvoz" && cart.length) {
       if (!zone) {
-        note = "Vyberte obec doručenia – podľa nej sa určí cena dopravy a minimálna objednávka.";
+        note = "Vyberte obec doručenia - podľa nej sa určí cena dopravy a minimálna objednávka.";
         blocked = true;
       } else if (sub < zone.min) {
-        note = "Minimálna objednávka pre obec " + village + " je " + eur(zone.min) + " (bez dopravy) – chýba " + eur(zone.min - sub) + ".";
+        note = "Minimálna objednávka pre obec " + village + " je " + eur(zone.min) + " (bez dopravy) - chýba " + eur(zone.min - sub) + ".";
         blocked = true;
       }
     }
@@ -226,7 +226,7 @@
       })
       .then(function (r) {
         if (!r.res.ok || !r.data.ok) throw new Error(r.data.error || "Server neprijal objednávku");
-        flash("Ďakujeme, " + payload.customer.name.split(" ")[0] + ". Objednávka č. " + r.data.number + " je prijatá – " +
+        flash("Ďakujeme, " + payload.customer.name.split(" ")[0] + ". Objednávka č. " + r.data.number + " je prijatá - " +
           (payload.mode === "rozvoz" ? "kuriér vám zavolá z čísla +421 910 201 271." : "ozveme sa na " + payload.customer.phone + "."), 7000, true);
         cart = []; f.reset(); closeOrder(); render();
         window.scrollTo({ top: 0, behavior: "smooth" });

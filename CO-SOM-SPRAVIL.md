@@ -55,7 +55,7 @@ moduly (tie sú pri tlačiarňach na Windows najčastejší zdroj bolesti).
 | `agent/print-agent.js` | Hlavná slučka. Polling, tlač, potvrdenie serveru, log do súboru, dotlač cez `--reprint`. |
 | `agent/receipt.js` | Rozloženie bločka. Tu sa mení, ako bloček vyzerá. |
 | `agent/escpos.js` | Vlastný ESC/POS builder — zarovnanie, veľkosti písma, inverzia, rez, zalamovanie riadkov na 48 znakov. Vrátane **mapy CP852**, aby vyšla slovenská diakritika. |
-| `agent/transport.js` | Odoslanie bajtov. Nastavené na **`windows`** — USB tlačiareň zdieľaná pod menom, dáta idú cez `copy /b` surovo (RAW). Pripravené sú aj `tcp` (LAN, port 9100), `command` (Linux `lp -o raw`) a `file` (ladenie bez papiera). |
+| `agent/transport.js` | Odoslanie bajtov. Nastavené na **`windows`** — USB tlačiareň zdieľaná pod menom, dáta idú cez `copy /b` surovo (RAW). Pripravený je aj `tcp` (LAN, port 9100). |
 | `agent/nahlad.js` | Renderer, ktorý prečíta ESC/POS bajty a nakreslí bloček do konzoly. |
 | `agent/test-print.js` | Testovacia tlač vzorovej objednávky. |
 | `agent/config.json` | Meno zdieľania tlačiarne, token, počet kópií, prepínač cien. |
