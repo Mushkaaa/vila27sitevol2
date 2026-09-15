@@ -114,6 +114,7 @@
   .r-text{flex:1;min-width:0}
   .r-nazov{font-weight:700;font-size:1rem}
   .r-pod{font-size:.8rem;color:var(--grey);font-family:"JetBrains Mono",monospace;margin-top:1px}
+  .r-popis{font-size:.82rem;color:var(--ink);margin-top:3px;line-height:1.35}
   .r-cena{font-weight:900;font-size:1.05rem;font-variant-numeric:tabular-nums;white-space:nowrap}
   .r-akcie{display:flex;gap:6px;flex:none}
   .r-akcie button{
@@ -530,6 +531,7 @@ function riadok(p){
     <div class="r-text">
       <div class="r-nazov">${esc(p.name)}</div>
       <div class="r-pod">${esc(w || "—")} · ${esc(alg)}</div>
+      ${p.desc ? `<div class="r-popis">${esc(p.desc)}</div>` : ""}
     </div>
     <span class="prep-popis">${zapnuty ? "v ponuke" : "vypnuté"}</span>
     <button type="button" class="prep" role="switch" aria-pressed="${zapnuty}"
