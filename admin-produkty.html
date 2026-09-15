@@ -168,12 +168,45 @@
   }
   .oznam.show{opacity:1;transform:translate(-50%,0);visibility:visible;transition:opacity .18s,transform .18s}
 
+  /* ---------- lišta nezapísaných zmien ---------- */
+  .lista{
+    position:fixed;left:0;right:0;bottom:0;z-index:45;
+    background:var(--ink);color:var(--paper);
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:12px 20px;box-shadow:0 -10px 30px rgba(20,17,15,.35);
+  }
+  .lista b{font-size:1rem;font-weight:900;flex:none}
+  .lista .co{
+    flex:1;min-width:180px;color:var(--muted);font-size:.86rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .lista button{min-height:var(--tap);padding:.6rem 1.2rem;font-weight:700;font-size:.9rem;flex:none}
+  .lista .zahod{background:transparent;color:var(--paper);border-color:var(--rule)}
+  .lista .zahod:hover{background:var(--ink-2)}
+  .lista .uloz{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+  .lista .uloz:hover{background:#fff}
+  .lista .uloz:disabled{opacity:.5;cursor:default}
+  .lista .rozpis{
+    flex-basis:100%;margin:0;padding:10px 0 2px;border-top:1px solid var(--rule);
+    color:var(--paper);font-size:.88rem;line-height:1.6;
+  }
+  .lista .rozpis span{display:inline-block;margin-right:14px}
+
+  .neulozene{
+    display:inline-block;margin-left:8px;padding:.12rem .45rem;border-radius:2px;
+    background:var(--accent);color:#fff;font-size:.62rem;font-weight:900;
+    letter-spacing:.1em;text-transform:uppercase;vertical-align:middle;
+  }
+
   @media (max-width:700px){
     .bar{padding:10px 14px;gap:10px}
     .bar h1,.cas{display:none}
     .tabs{order:3;flex-basis:100%}
     .tabs button{flex:1}
     .obal{padding:16px 14px 80px}
+    .lista{padding:10px 14px;gap:8px}
+    .lista .co{display:none}
+    .lista button{flex:1}
     .riadok{flex-wrap:wrap}
     .r-text{flex-basis:100%;order:1}
     .prep-popis{order:2}
@@ -224,6 +257,14 @@
     </div>
     <button type="button" class="btn-druhy" id="novaKatBtn">Pridať kategóriu</button>
     <div id="vypis"></div>
+  </div>
+
+  <div class="lista" id="lista" hidden>
+    <b id="lPocet"></b>
+    <span class="co" id="lCo"></span>
+    <button type="button" class="zahod" id="zahodBtn">Zahodiť</button>
+    <button type="button" class="uloz" id="ulozBtn">Uložiť zmeny</button>
+    <p class="rozpis" id="lRozpis" hidden></p>
   </div>
 </div>
 
@@ -309,22 +350,36 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const DRAFT = "vila27_rozpracovany";      // len sessionStorage, nikdy localStorage
+const DRAFT = "vila27_rozpracovane";      // len sessionStorage, nikdy localStorage
+const ZOZNAMY = ["rozvoz", "jedalnylistok"];
 
+/* Zmeny sa zbierajú v prehliadači a na server idú naraz až tlačidlom
+   „Uložiť zmeny“. Pre každý zoznam si držíme, ako vyzeral pri načítaní
+   (povodne) a ako vyzerá teraz – z toho sa ráta, čo sa vlastne zmenilo. */
+let data = { rozvoz: null, jedalnylistok: null };
 let zoznam = "rozvoz";
-let kategorie = [];
 let ALERGENY = {};
-let upravovany = null;        // id produktu, ktorý je práve v okne (null = nový)
-let spinavy = false;          // v okne sú nezapísané zmeny
-let koniec = 0, tikot = null;
+let upravovany = null;        // id produktu v okne (null = nový)
+let tmpPocitadlo = 0;         // dočasné id nových produktov, server im dá vlastné
+let koniec = 0, tikot = null, minutSedenia = 20;
 
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
 const eur = n => (Number(n) || 0).toFixed(2).replace(".", ",") + " €";
+const kopia = x => JSON.parse(JSON.stringify(x));
 const NAZOV = { rozvoz: "Rozvoz", jedalnylistok: "Jedálny lístok" };
 const POPIS = {
   rozvoz: "Toto vidia zákazníci v objednávkovom formulári. Vypnutý produkt sa nedá objednať.",
   jedalnylistok: "Toto je jedálny a nápojový lístok na stránke. Vypnutý produkt sa na ňom nezobrazí.",
 };
+const pocetSlovom = n => n === 1 ? "produkt" : (n >= 2 && n <= 4) ? "produkty" : "produktov";
+function zmenyText(n){
+  if (n === 1) return "1 neuložená zmena";
+  if (n >= 2 && n <= 4) return n + " neuložené zmeny";
+  return n + " neuložených zmien";
+}
+
+const kategorie = () => (data[zoznam] ? data[zoznam].teraz : []);
+const vsetkyProdukty = z => (data[z] ? data[z].teraz.flatMap(c => c.items) : []);
 
 let oznamT;
 function oznam(text){
@@ -349,39 +404,91 @@ async function api(cesta, telo){
   return data;
 }
 
-/* Prihlásenie vypršalo. Rozrobený produkt nezahadzujeme – odložíme ho a
-   po opätovnom prihlásení ho ponúkneme späť. */
+/* Prihlásenie vypršalo. Nazbierané zmeny nezahadzujeme – odložíme ich
+   a po opätovnom prihlásení ich ponúkneme späť. */
 function vypadloPrihlasenie(){
-  if (spinavy){
-    try{ sessionStorage.setItem(DRAFT, JSON.stringify({ zoznam, produkt: zberFormular(), id: upravovany })); }catch(e){}
+  if (jeCoUlozit()){
+    const odlozene = {};
+    ZOZNAMY.forEach(z => { if (data[z]) odlozene[z] = data[z].teraz; });
+    try{ sessionStorage.setItem(DRAFT, JSON.stringify(odlozene)); }catch(e){}
   }
   naGate("Prihlásenie vypršalo. Prihláste sa znova.");
 }
 
 function naGate(chyba){
   clearInterval(tikot); tikot = null;
-  kategorie = []; upravovany = null; spinavy = false;
+  data = { rozvoz: null, jedalnylistok: null };
+  upravovany = null;
   zavriVsetky();
+  $("#lista").hidden = true;
   $("#app").hidden = true;
   $("#gate").hidden = false;
   $("#gateErr").textContent = chyba || "";
   const draft = sessionStorage.getItem(DRAFT);
   $("#gateDraft").hidden = !draft;
-  if (draft) $("#gateDraft").textContent = "Rozpracovaný produkt sme neodhodili – po prihlásení ho nájdete otvorený tak, ako ste ho nechali.";
+  if (draft) $("#gateDraft").textContent = "Neuložené zmeny sme neodhodili – po prihlásení budú späť tak, ako ste ich nechali.";
   $("#g-heslo").value = "";
   $("#g-meno").focus();
 }
 
-const pocetSlovom = n => n === 1 ? "produkt" : (n >= 2 && n <= 4) ? "produkty" : "produktov";
-
 /* ---------- odpočet do konca prihlásenia ---------- */
-let minutSedenia = 20;
 function posunOdpocet(){ koniec = Date.now() + minutSedenia * 60000; }
 function tik(){
   const zostava = Math.max(0, Math.round((koniec - Date.now()) / 1000));
-  if (!zostava){ naGate("Prihlásenie vypršalo pre nečinnosť. Prihláste sa znova."); return; }
+  if (!zostava){ vypadloPrihlasenie(); return; }
   const m = Math.floor(zostava / 60), s = zostava % 60;
   $("#odpocet").textContent = `odhlásenie o ${m}:${String(s).padStart(2, "0")}`;
+}
+
+/* ---------- čo sa zmenilo ---------- */
+function zmeneny(z){
+  return !!data[z] && JSON.stringify(data[z].povodne) !== JSON.stringify(data[z].teraz);
+}
+function jeCoUlozit(){ return ZOZNAMY.some(zmeneny); }
+
+/** Ľudský zoznam zmien oproti stavu pri načítaní. */
+function rozdiel(z){
+  if (!data[z]) return [];
+  const { povodne, teraz } = data[z];
+  const out = [];
+
+  povodne.forEach(c => { if (!teraz.some(x => x.id === c.id)) out.push(`zmazaná kategória ${c.cat}`); });
+  teraz.forEach(c => { if (!povodne.some(x => x.id === c.id)) out.push(`nová kategória ${c.cat}`); });
+
+  const stare = new Map(povodne.flatMap(c => c.items.map(i => [i.id, { p: i, cat: c }])));
+  const nove = new Map(teraz.flatMap(c => c.items.map(i => [i.id, { p: i, cat: c }])));
+
+  stare.forEach((v, id) => { if (!nove.has(id)) out.push(`zmazaný ${v.p.name}`); });
+  nove.forEach((v, id) => {
+    const s = stare.get(id);
+    if (!s){ out.push(`nový ${v.p.name}`); return; }
+    if (s.p.online !== v.p.online){ out.push(`${v.p.online ? "zapnutý" : "vypnutý"} ${v.p.name}`); return; }
+    if (s.cat.id !== v.cat.id){ out.push(`${v.p.name} presunutý do ${v.cat.cat}`); return; }
+    if (JSON.stringify(s.p) !== JSON.stringify(v.p)) out.push(`upravený ${v.p.name}`);
+  });
+  return out;
+}
+
+function oznacZmeny(){
+  const vsetky = ZOZNAMY.flatMap(z => rozdiel(z).map(t => ({ z, t })));
+  const pocet = vsetky.length;
+
+  $("#lista").hidden = pocet === 0;
+  $("#ulozBtn").disabled = pocet === 0;
+  if (pocet){
+    $("#lPocet").textContent = zmenyText(pocet);
+    $("#lCo").textContent = vsetky.slice(0, 3).map(x => x.t).join(", ") + (pocet > 3 ? " a ďalšie…" : "");
+    const rozpis = $("#lRozpis");
+    rozpis.hidden = pocet <= 3;
+    if (pocet > 3) rozpis.innerHTML = vsetky.map(x => `<span>${esc(x.t)}</span>`).join("");
+  }
+
+  // na záložke, ktorá má zmeny, nech je to vidieť aj keď je otvorená tá druhá
+  document.querySelectorAll(".tabs button").forEach(b => {
+    const z = b.dataset.zoznam;
+    b.innerHTML = esc(NAZOV[z]) + (zmeneny(z) ? '<span class="neulozene">zmeny</span>' : "");
+    b.classList.toggle("on", z === zoznam);
+  });
 }
 
 /* ---------- vykreslenie zoznamu ---------- */
@@ -408,9 +515,8 @@ function riadok(p){
 function vykresli(){
   $("#nadpis").textContent = NAZOV[zoznam];
   $("#podnadpis").textContent = POPIS[zoznam];
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.zoznam === zoznam));
 
-  $("#vypis").innerHTML = kategorie.map(c => `
+  $("#vypis").innerHTML = kategorie().map(c => `
     <section class="kat">
       <div class="kat-hlava">
         <h3>${esc(c.cat)}</h3>
@@ -422,13 +528,48 @@ function vykresli(){
       </div>
       ${c.items.length ? c.items.map(riadok).join("") : '<p style="color:var(--grey);font-size:.9rem;padding:8px 0">Zatiaľ tu nič nie je.</p>'}
     </section>`).join("");
+
+  oznacZmeny();
 }
 
-async function nacitaj(){
-  const data = await api("/api/admin-menu", { akcia: "nacitaj", zoznam });
-  kategorie = data.kategorie;
-  ALERGENY = data.alergeny || ALERGENY;
+async function nacitaj(z){
+  const odpoved = await api("/api/admin-menu", { akcia: "nacitaj", zoznam: z });
+  ALERGENY = odpoved.alergeny || ALERGENY;
+  data[z] = { povodne: kopia(odpoved.kategorie), teraz: kopia(odpoved.kategorie) };
+}
+
+/* ---------- uloženie všetkého naraz ---------- */
+async function publikuj(){
+  if (!jeCoUlozit()) return;
+  const btn = $("#ulozBtn");
+  const popis = btn.textContent;
+  btn.disabled = true; btn.textContent = "Ukladám…";
+  try{
+    const zmeny = {};
+    ZOZNAMY.forEach(z => { if (zmeneny(z)) zmeny[z] = data[z].teraz; });
+    const odpoved = await api("/api/admin-menu", { akcia: "ulozVsetko", zmeny });
+
+    Object.keys(odpoved.zoznamy || {}).forEach(z => {
+      data[z] = { povodne: kopia(odpoved.zoznamy[z]), teraz: kopia(odpoved.zoznamy[z]) };
+    });
+    sessionStorage.removeItem(DRAFT);
+    vykresli();
+    oznam("Zmeny sú uložené a hneď platia na stránke.");
+  }catch(e){
+    if (e.message !== "401") oznam(e.message);
+  }finally{
+    btn.disabled = false; btn.textContent = popis;
+    oznacZmeny();
+  }
+}
+
+function zahod(){
+  if (!confirm("Zahodiť všetky neuložené zmeny a vrátiť sa k poslednej uloženej podobe?")) return;
+  ZOZNAMY.forEach(z => { if (data[z]) data[z].teraz = kopia(data[z].povodne); });
+  sessionStorage.removeItem(DRAFT);
+  zavriVsetky();
   vykresli();
+  oznam("Zmeny sú zahodené.");
 }
 
 /* ---------- okno produktu ---------- */
@@ -454,84 +595,101 @@ function otvorProdukt(produkt, catId){
   $("#p-poradie").value = produkt && produkt.sort != null ? produkt.sort : "";
   poliaAlergenov(produkt ? (produkt.allergens || []) : []);
 
-  const vKategorii = catId || (produkt ? (kategorie.find(c => c.items.some(i => i.id === produkt.id)) || {}).id : kategorie[0] && kategorie[0].id);
-  $("#p-kat").innerHTML = kategorie.map(c => `<option value="${esc(c.id)}" ${c.id === vKategorii ? "selected" : ""}>${esc(c.cat)}</option>`).join("");
+  const vKategorii = catId || (produkt ? (kategorie().find(c => c.items.some(i => i.id === produkt.id)) || {}).id : (kategorie()[0] || {}).id);
+  $("#p-kat").innerHTML = kategorie().map(c => `<option value="${esc(c.id)}" ${c.id === vKategorii ? "selected" : ""}>${esc(c.cat)}</option>`).join("");
 
-  spinavy = false;
   $("#oknoProdukt").classList.add("show");
   $("#p-nazov").focus();
 }
 
-function zberFormular(){
-  return {
-    id: upravovany || "",
-    name: $("#p-nazov").value,
-    price: $("#p-cena").value,
-    weight: { value: $("#p-vaha").value, unit: $("#p-jednotka").value },
-    desc: $("#p-popis").value,
-    sort: $("#p-poradie").value,
-    allergens: Array.from($("#p-alerg").querySelectorAll("input:checked")).map(i => Number(i.value)),
-    kategoria: $("#p-kat").value,
-  };
-}
+/** Uloží produkt do rozpracovanej podoby zoznamu – na server ide až pri publikovaní. */
+function ulozProdukt(){
+  const name = $("#p-nazov").value.trim();
+  const cena = Number($("#p-cena").value.replace(",", "."));
+  const vahaText = $("#p-vaha").value.trim();
+  const jednotka = $("#p-jednotka").value;
+  const catId = $("#p-kat").value;
 
-async function ulozProdukt(){
-  const data = zberFormular();
-  const kategoria = data.kategoria;
-  delete data.kategoria;
-  if (!data.id) delete data.id;
-
-  $("#pChyba").textContent = "";
-  try{
-    const odpoved = await api("/api/admin-menu", { akcia: "uloz", zoznam, kategoria, produkt: data });
-    kategorie = odpoved.kategorie;
-    spinavy = false;
-    sessionStorage.removeItem(DRAFT);
-    zavriVsetky();
-    vykresli();
-    oznam(upravovany ? "Produkt upravený." : "Produkt pridaný.");
-  }catch(e){
-    if (e.message !== "401") $("#pChyba").textContent = e.message;
+  const chyba = $("#pChyba");
+  chyba.textContent = "";
+  if (!name){ chyba.textContent = "Vyplňte názov."; return; }
+  if (!Number.isFinite(cena) || cena < 0){ chyba.textContent = "Cena musí byť kladné číslo."; return; }
+  let vaha = null;
+  if (vahaText){
+    vaha = Number(vahaText.replace(",", "."));
+    if (!Number.isFinite(vaha) || vaha <= 0){ chyba.textContent = "Gramáž musí byť kladné číslo."; return; }
   }
+  const ciel = kategorie().find(c => c.id === catId);
+  if (!ciel){ chyba.textContent = "Vyberte kategóriu."; return; }
+
+  const stary = upravovany ? kategorie().flatMap(c => c.items).find(i => i.id === upravovany) : null;
+  const poradie = Number($("#p-poradie").value);
+
+  const produkt = {
+    ...(stary || {}),
+    id: upravovany || ("tmp-" + (++tmpPocitadlo)),
+    name,
+    price: Math.round(cena * 100) / 100,
+    weight: { value: vaha, unit: jednotka, text: vaha != null ? `${String(vaha).replace(".", ",")} ${jednotka}` : "" },
+    allergens: Array.from($("#p-alerg").querySelectorAll("input:checked")).map(i => Number(i.value)).sort((a, b) => a - b),
+    desc: $("#p-popis").value.trim(),
+    sort: Number.isFinite(poradie) ? poradie : 0,
+    online: stary ? stary.online !== false : true,
+  };
+
+  kategorie().forEach(c => { c.items = c.items.filter(i => i.id !== produkt.id); });
+  ciel.items.push(produkt);
+  ciel.items.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+
+  upravovany = null;
+  zavriVsetky();
+  vykresli();
+  oznam(stary ? "Produkt upravený. Nezabudnite zmeny uložiť." : "Produkt pridaný. Nezabudnite zmeny uložiť.");
 }
 
-/* ---------- akcie v zozname ---------- */
-async function prepni(id, zapnut){
-  try{
-    await api("/api/admin-menu", { akcia: "prepni", zoznam, id, online: zapnut });
-    kategorie.forEach(c => c.items.forEach(i => { if (i.id === id) i.online = zapnut; }));
-    vykresli();
-    oznam(zapnut ? "Produkt je v ponuke." : "Produkt je vypnutý, zákazníci ho nevidia.");
-  }catch(e){ if (e.message !== "401") oznam(e.message); }
+/* ---------- akcie v zozname (všetky len lokálne) ---------- */
+function prepni(id, zapnut){
+  kategorie().forEach(c => c.items.forEach(i => { if (i.id === id) i.online = zapnut; }));
+  vykresli();
 }
 
-async function zmaz(id){
-  const p = kategorie.flatMap(c => c.items).find(i => i.id === id);
-  if (!p || !confirm(`Naozaj zmazať „${p.name}“?\n\nZmena sa dá vrátiť cez Zálohy.`)) return;
-  try{
-    const odpoved = await api("/api/admin-menu", { akcia: "zmaz", zoznam, id });
-    kategorie = odpoved.kategorie;
-    vykresli();
-    oznam("Produkt zmazaný. Vrátiť sa dá cez Zálohy.");
-  }catch(e){ if (e.message !== "401") oznam(e.message); }
+function zmaz(id){
+  const p = kategorie().flatMap(c => c.items).find(i => i.id === id);
+  if (!p || !confirm(`Naozaj zmazať „${p.name}“?\n\nZmaže sa až pri uložení zmien.`)) return;
+  kategorie().forEach(c => { c.items = c.items.filter(i => i.id !== id); });
+  vykresli();
 }
 
-async function zmazKategoriu(id){
-  const c = kategorie.find(x => x.id === id);
+function zmazKategoriu(id){
+  const c = kategorie().find(x => x.id === id);
   if (!c || !confirm(`Naozaj zmazať kategóriu „${c.cat}“?`)) return;
-  try{
-    const odpoved = await api("/api/admin-menu", { akcia: "zmazKategoriu", zoznam, id });
-    kategorie = odpoved.kategorie;
-    vykresli();
-    oznam("Kategória zmazaná.");
-  }catch(e){ if (e.message !== "401") oznam(e.message); }
+  data[zoznam].teraz = kategorie().filter(x => x.id !== id);
+  vykresli();
+}
+
+function pridajKategoriu(){
+  const nazov = $("#k-nazov").value.trim();
+  const chyba = $("#kChyba");
+  chyba.textContent = "";
+  if (!nazov){ chyba.textContent = "Vyplňte názov kategórie."; return; }
+  if (kategorie().some(c => c.cat.toLowerCase() === nazov.toLowerCase())){
+    chyba.textContent = "Taká kategória už existuje."; return;
+  }
+  kategorie().push({
+    id: "tmp-kat-" + (++tmpPocitadlo), cat: nazov,
+    kind: $("#k-druh").value === "drink" ? "drink" : "food",
+    note: "", sort: kategorie().length, items: [],
+  });
+  zavriVsetky();
+  vykresli();
+  oznam("Kategória pridaná. Nezabudnite zmeny uložiť.");
 }
 
 /* ---------- zálohy ---------- */
 async function otvorZalohy(){
   try{
-    const data = await api("/api/admin-menu", { akcia: "zalohy" });
-    const z = data.zalohy || [];
+    const odpoved = await api("/api/admin-menu", { akcia: "zalohy" });
+    const z = odpoved.zalohy || [];
     $("#zVypis").innerHTML = z.length ? z.map(x => {
       const d = new Date(x.kedy);
       const p = n => String(n).padStart(2, "0");
@@ -540,17 +698,19 @@ async function otvorZalohy(){
         <span class="co">${esc(NAZOV[x.zoznam] || x.zoznam)} — ${esc(x.popis)} <span style="color:var(--grey)">(${x.poloziek} položiek)</span></span>
         <button type="button" data-obnov="${esc(x.id)}">Vrátiť</button>
       </div>`;
-    }).join("") : '<p style="color:var(--grey)">Zatiaľ žiadne zálohy – vytvoria sa pri prvej zmene.</p>';
+    }).join("") : '<p style="color:var(--grey)">Zatiaľ žiadne zálohy – vytvoria sa pri prvom uložení.</p>';
     $("#oknoZalohy").classList.add("show");
   }catch(e){ if (e.message !== "401") oznam(e.message); }
 }
 
 async function obnovZalohu(id){
+  if (jeCoUlozit() && !confirm("Máte neuložené zmeny. Vrátením zálohy sa zahodia. Pokračovať?")) return;
   if (!confirm("Vrátiť ponuku do podoby spred tejto úpravy?")) return;
   try{
-    const data = await api("/api/admin-menu", { akcia: "obnov", id });
-    zoznam = data.zoznam;
-    kategorie = data.kategorie;
+    const odpoved = await api("/api/admin-menu", { akcia: "obnov", id });
+    zoznam = odpoved.zoznam;
+    data[zoznam] = { povodne: kopia(odpoved.kategorie), teraz: kopia(odpoved.kategorie) };
+    sessionStorage.removeItem(DRAFT);
     zavriVsetky();
     vykresli();
     oznam("Ponuka je vrátená späť.");
@@ -568,46 +728,41 @@ async function prihlas(){
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ akcia: "prihlas", meno, heslo }),
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok){ $("#gateErr").textContent = data.error || "Prihlásenie sa nepodarilo."; return; }
+    const odpoved = await res.json().catch(() => ({}));
+    if (!res.ok || !odpoved.ok){ $("#gateErr").textContent = odpoved.error || "Prihlásenie sa nepodarilo."; return; }
 
     $("#g-heslo").value = "";
     $("#gate").hidden = true;
     $("#app").hidden = false;
-    minutSedenia = data.minut || 20;
+    minutSedenia = odpoved.minut || 20;
     posunOdpocet();
     clearInterval(tikot); tikot = setInterval(tik, 1000); tik();
-    await nacitaj();
-    obnovRozpracovane();
+
+    for (const z of ZOZNAMY) await nacitaj(z);
+    obnovOdlozene();
+    vykresli();
   }catch(e){
     $("#gateErr").textContent = "Server neodpovedá. Skúste to znova.";
   }
 }
 
-/* Po opätovnom prihlásení vrátime rozrobený produkt tam, kde bol. */
-function obnovRozpracovane(){
+/** Po opätovnom prihlásení vrátime nazbierané zmeny späť. */
+function obnovOdlozene(){
   const raw = sessionStorage.getItem(DRAFT);
   if (!raw) return;
   sessionStorage.removeItem(DRAFT);
   let d; try{ d = JSON.parse(raw); }catch{ return; }
-  if (d.zoznam !== zoznam) return;
-  const existujuci = d.id ? kategorie.flatMap(c => c.items).find(i => i.id === d.id) : null;
-  otvorProdukt(existujuci, d.produkt.kategoria);
-  $("#p-nazov").value = d.produkt.name || "";
-  $("#p-cena").value = d.produkt.price || "";
-  $("#p-vaha").value = (d.produkt.weight && d.produkt.weight.value) || "";
-  $("#p-jednotka").value = (d.produkt.weight && d.produkt.weight.unit) || "g";
-  $("#p-popis").value = d.produkt.desc || "";
-  $("#p-poradie").value = d.produkt.sort || "";
-  poliaAlergenov(d.produkt.allergens || []);
-  spinavy = true;
-  oznam("Rozpracovaný produkt je späť.");
+  let vratene = 0;
+  ZOZNAMY.forEach(z => {
+    if (d[z] && data[z]){ data[z].teraz = d[z]; vratene++; }
+  });
+  if (vratene) oznam("Neuložené zmeny sú späť. Uložte ich tlačidlom dole.");
 }
 
 async function odhlas(){
-  if (spinavy && !confirm("V okne máte neuložené zmeny. Odhlásiť sa a zahodiť ich?")) return;
+  if (jeCoUlozit() && !confirm("Máte neuložené zmeny. Odhlásiť sa a zahodiť ich?")) return;
   sessionStorage.removeItem(DRAFT);
-  spinavy = false;
+  data = { rozvoz: null, jedalnylistok: null };
   try{ await fetch("/api/admin-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ akcia: "odhlas" }) }); }catch(e){}
   naGate("");
 }
@@ -618,18 +773,19 @@ $("#g-heslo").addEventListener("keydown", e => { if (e.key === "Enter") prihlas(
 $("#g-meno").addEventListener("keydown", e => { if (e.key === "Enter") $("#g-heslo").focus(); });
 $("#odhlas").addEventListener("click", odhlas);
 $("#zalohyBtn").addEventListener("click", otvorZalohy);
+$("#ulozBtn").addEventListener("click", publikuj);
+$("#zahodBtn").addEventListener("click", zahod);
 
-document.querySelector(".tabs").addEventListener("click", async e => {
+document.querySelector(".tabs").addEventListener("click", e => {
   const b = e.target.closest("[data-zoznam]");
   if (!b || b.dataset.zoznam === zoznam) return;
-  if (spinavy && !confirm("V okne máte neuložené zmeny. Prepnúť a zahodiť ich?")) return;
-  spinavy = false; zavriVsetky();
-  zoznam = b.dataset.zoznam;
-  try{ await nacitaj(); }catch(e){}
+  zavriVsetky();
+  zoznam = b.dataset.zoznam;      // rozpracované zmeny druhého zoznamu ostávajú
+  vykresli();
 });
 
 $("#novyBtn").addEventListener("click", () => {
-  if (!kategorie.length){ oznam("Najprv pridajte kategóriu."); return; }
+  if (!kategorie().length){ oznam("Najprv pridajte kategóriu."); return; }
   otvorProdukt(null, null);
 });
 $("#novaKatBtn").addEventListener("click", () => {
@@ -643,7 +799,7 @@ $("#vypis").addEventListener("click", e => {
   if (prep){ prepni(prep.dataset.prep, prep.getAttribute("aria-pressed") !== "true"); return; }
   const uprav = e.target.closest("[data-uprav]");
   if (uprav){
-    const p = kategorie.flatMap(c => c.items).find(i => i.id === uprav.dataset.uprav);
+    const p = kategorie().flatMap(c => c.items).find(i => i.id === uprav.dataset.uprav);
     if (p) otvorProdukt(p, null);
     return;
   }
@@ -661,40 +817,20 @@ $("#zVypis").addEventListener("click", e => {
 });
 
 $("#pUloz").addEventListener("click", ulozProdukt);
-$("#kUloz").addEventListener("click", async () => {
-  const nazov = $("#k-nazov").value.trim();
-  $("#kChyba").textContent = "";
-  try{
-    const data = await api("/api/admin-menu", { akcia: "kategoria", zoznam, nazov, kind: $("#k-druh").value });
-    kategorie = data.kategorie;
-    zavriVsetky();
-    vykresli();
-    oznam("Kategória pridaná.");
-  }catch(e){ if (e.message !== "401") $("#kChyba").textContent = e.message; }
-});
+$("#kUloz").addEventListener("click", pridajKategoriu);
 
-function zavriProdukt(){
-  if (spinavy && !confirm("Zahodiť neuložené zmeny?")) return;
-  spinavy = false;
-  zavriVsetky();
-}
+function zavriProdukt(){ upravovany = null; zavriVsetky(); }
 $("#pZavri").addEventListener("click", zavriProdukt);
 $("#pZrus").addEventListener("click", zavriProdukt);
 $("#kZavri").addEventListener("click", zavriVsetky);
 $("#kZrus").addEventListener("click", zavriVsetky);
 $("#zZavri").addEventListener("click", zavriVsetky);
 
-$("#oknoProdukt").addEventListener("input", () => { spinavy = true; });
-$("#oknoProdukt").addEventListener("change", () => { spinavy = true; });
-document.addEventListener("keydown", e => {
-  if (e.key !== "Escape") return;
-  if ($("#oknoProdukt").classList.contains("show")) zavriProdukt();
-  else zavriVsetky();
-});
+document.addEventListener("keydown", e => { if (e.key === "Escape") zavriProdukt(); });
 
-/* Obnovenie stránky odhlasuje – nech to nepríde ako prekvapenie s rozrobeným produktom. */
+/* Obnovenie stránky odhlasuje – nech neprídu o nazbierané zmeny bez varovania. */
 addEventListener("beforeunload", e => {
-  if (!spinavy) return;
+  if (!jeCoUlozit()) return;
   e.preventDefault();
   e.returnValue = "";
 });

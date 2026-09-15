@@ -79,6 +79,60 @@ function skontrolujProdukt(vstup, obsadeneId, povodne) {
 }
 
 const najdiKategoriu = (kategorie, id) => kategorie.find(c => c.id === id);
+const NAZOV = { rozvoz: 'Rozvoz', jedalnylistok: 'Jedálny lístok' };
+
+/**
+ * Skontroluje celý zoznam naraz – majiteľ si nazbiera zmeny v prehliadači
+ * a pošle ich jedným tlačidlom. Z prehliadača sa preberá len to, čo sa dá
+ * upraviť vo formulári; doplnky k jedlám, poznámky kategórií a poradové čísla
+ * sa berú z uloženej verzie, aby sa nedali podstrčiť.
+ */
+function skontrolujZoznam(vstup, stare) {
+  if (!Array.isArray(vstup) || !vstup.length) return { chyba: 'Zoznam je prázdny.' };
+
+  const stareProdukty = new Map(stare.flatMap(c => c.items.map(i => [i.id, i])));
+  const stareKategorie = new Map(stare.map(c => [c.id, c]));
+  const vsetkyId = new Set(stareProdukty.keys());
+  const pouzite = new Set();
+  const kategorie = [];
+
+  for (const c of vstup) {
+    const cat = text(c.cat, 60);
+    if (!cat) return { chyba: 'Kategória bez názvu.' };
+
+    const catId = text(c.id, 60) || jedineceId(cat, new Set(kategorie.map(k => k.id)));
+    if (kategorie.some(k => k.id === catId)) return { chyba: `Kategória ${cat} je v zozname dvakrát.` };
+    const staraKat = stareKategorie.get(catId);
+
+    const items = [];
+    for (const p of (Array.isArray(c.items) ? c.items : [])) {
+      const id = text(p.id, 60);
+      const povodne = id && stareProdukty.has(id) ? stareProdukty.get(id) : null;
+
+      const { chyba, produkt } = skontrolujProdukt(p, vsetkyId, povodne);
+      if (chyba) return { chyba: `${cat} – ${chyba}` };
+
+      // rovnaký názov je v poriadku (to isté pivo v 0,3 l aj 0,5 l), rovnaké id nie
+      if (pouzite.has(produkt.id)) return { chyba: `Produkt ${produkt.name} je v zozname dvakrát.` };
+      pouzite.add(produkt.id);
+      vsetkyId.add(produkt.id);
+      items.push(produkt);
+    }
+
+    const k = {
+      id: catId,
+      cat,
+      kind: c.kind === 'drink' ? 'drink' : 'food',
+      note: staraKat ? staraKat.note || '' : '',
+      sort: Number.isFinite(Number(c.sort)) ? Number(c.sort) : kategorie.length,
+      items,
+    };
+    if (staraKat && staraKat.extras) k.extras = staraKat.extras;
+    kategorie.push(k);
+  }
+
+  return { kategorie };
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -96,6 +150,28 @@ module.exports = async (req, res) => {
 
     if (akcia === 'zalohy') {
       return res.status(200).json({ ok: true, zalohy: await menu.zalohy() });
+    }
+
+    // uloženie všetkých nazbieraných zmien naraz
+    if (akcia === 'ulozVsetko') {
+      const zmeny = body.zmeny && typeof body.zmeny === 'object' ? body.zmeny : {};
+      const ciele = Object.keys(zmeny).filter(z => menu.jeZoznam(z));
+      if (!ciele.length) return res.status(400).json({ ok: false, error: 'Nie je čo uložiť.' });
+
+      // najprv sa skontroluje všetko, až potom sa zapisuje – nech neostane uložená polovica
+      const pripravene = [];
+      for (const z of ciele) {
+        const { chyba, kategorie } = skontrolujZoznam(zmeny[z], await menu.nacitaj(z));
+        if (chyba) return res.status(400).json({ ok: false, error: `${NAZOV[z]}: ${chyba}` });
+        pripravene.push({ zoznam: z, kategorie });
+      }
+
+      const vysledok = {};
+      for (const p of pripravene) {
+        await menu.uloz(p.zoznam, p.kategorie, 'hromadná úprava');
+        vysledok[p.zoznam] = p.kategorie;
+      }
+      return res.status(200).json({ ok: true, zoznamy: vysledok });
     }
 
     if (akcia === 'obnov') {
@@ -151,9 +227,6 @@ module.exports = async (req, res) => {
 
       const { chyba, produkt } = skontrolujProdukt(vstup, obsadene, povodne);
       if (chyba) return res.status(400).json({ ok: false, error: chyba });
-
-      const rovnaky = ciel.items.find(i => i.id !== produkt.id && i.name.toLowerCase() === produkt.name.toLowerCase());
-      if (rovnaky) return res.status(400).json({ ok: false, error: `V kategórii ${ciel.cat} už je produkt s názvom ${produkt.name}.` });
 
       if (staraKategoria) staraKategoria.items = staraKategoria.items.filter(i => i.id !== produkt.id);
       ciel.items.push(produkt);
