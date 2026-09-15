@@ -28,13 +28,23 @@ a vytlačia sa, len čo sa spojenie vráti.
 
 ```
 index.html, jedalny-listok.html, kontakt.html, objednavka.html, *.css, logo.png
-admin.html            – prehľad objednávok pre obsluhu (chránené tokenom)
+menu.json             – ponuka (rozvoz + jedálny lístok); záloha, keď Redis mlčí
+admin.html            – nástenka objednávok pre obsluhu (chránená PRINT_TOKEN)
+admin-produkty.html   – správa ponuky pre majiteľa (meno + heslo)
 vercel.json
 dev-server.js         – lokálny server na test na jednom PC (namiesto Vercelu)
 api/
-  orders.js           – POST, prijme objednávku zo stránky
+  orders.js           – POST, prijme objednávku; ceny ráta zo servera
   queue.js            – GET/POST, fronta pre tlačového agenta
+  menu.js             – GET, verejná ponuka pre stránky (cache na CDN 5 min)
+  admin-auth.js       – POST, prihlásenie majiteľa
+  admin-menu.js       – POST, úpravy ponuky (chránené prihlásením)
   _store.js           – úložisko (Upstash Redis, s fallbackom do pamäte)
+  _menu.js            – ponuka: Redis → menu.json, zálohy a vrátenie späť
+  _auth.js            – sedenia majiteľa, cookie, porovnanie hesla
+_build/
+  build.py            – generuje statické stránky
+  migrate-menu.js     – jednorazový prevod pôvodného menu-data.js → menu.json
 agent/
   print-agent.js      – hlavný program, beží na PC v reštaurácii
   receipt.js          – rozloženie bločka (tu meň, ako bloček vyzerá)
@@ -59,7 +69,13 @@ s medzerou a zátvorkami robila problémy.
 
    | Premenná | Hodnota |
    |---|---|
-   | `PRINT_TOKEN` | dlhé náhodné heslo, napr. z `openssl rand -hex 24` |
+   | `PRINT_TOKEN` | dlhé náhodné heslo, napr. z `openssl rand -hex 24` — obsluha ho zadáva na `/admin` |
+   | `ADMIN_USER` | meno majiteľa do `/admin-produkty` |
+   | `ADMIN_PASS` | heslo majiteľa do `/admin-produkty` |
+
+   ⚠ Kým `ADMIN_USER` a `ADMIN_PASS` nie sú nastavené, platia dočasné testovacie
+   údaje `adminvila27` / `adminvila27` zapísané v `api/_auth.js`. Pred ostrým
+   spustením ich na Verceli prepíš.
 
 3. Databáza — v **Storage** pridaj **Upstash Redis** (free tier stačí). Vercel sám
    doplní `KV_REST_API_URL` a `KV_REST_API_TOKEN`.
@@ -73,8 +89,10 @@ Skúška, či server žije:
 curl -X POST https://tvoja-domena.vercel.app/api/orders \
   -H "content-type: application/json" \
   -d '{"mode":"odber","customer":{"name":"Test","phone":"+421900000000"},
-       "items":[{"name":"Halušky","qty":1,"unitPrice":10.9}]}'
+       "items":[{"id":"lp1","qty":1}]}'
 ```
+
+Cenu netreba posielať — server si ju nájde podľa `id` v uloženej ponuke.
 
 Má vrátiť `{"ok":true,"number":1,...}`.
 
@@ -218,11 +236,9 @@ Protection.
 
 Toto som zámerne nechal na tebe, ale bez toho by som to zákazníkovi nepúšťal:
 
-1. **Ceny sa berú z prehliadača.** Server prepočíta súčty, ale jednotkové ceny
-   posiela klient — v konzole si ich vie ktokoľvek prepísať. Vytiahni `MENU`
-   z `objednavka.html` do `menu.json`, načítaj ho aj v `api/orders.js` a ceny
-   ber odtiaľ. Je to asi hodina roboty a je to jediná vec, ktorú považujem
-   za skutočnú dieru.
+1. ~~**Ceny sa berú z prehliadača.**~~ **Vyriešené.** Prehliadač posiela už len
+   id jedla, počet a doplnky. `api/orders.js` si ceny vytiahne z uloženej ponuky
+   a objednávku s neznámym alebo vypnutým jedlom odmietne.
 2. **Otváracie hodiny** — teraz sa dá objednať aj o tretej ráno. Kontrola patrí
    na server, nie do JS.
 3. **Potvrdenie zákazníkovi** — SMS alebo e-mail (Resend, Twilio). Teraz sa

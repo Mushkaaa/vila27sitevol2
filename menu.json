@@ -1,0 +1,3950 @@
+{
+  "verzia": 1,
+  "rozvoz": [
+    {
+      "id": "predjedla",
+      "cat": "Predjedlá",
+      "kind": "food",
+      "note": "",
+      "sort": 0,
+      "items": [
+        {
+          "id": "pd1",
+          "name": "Tatársky biftek",
+          "price": 12.5,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            3,
+            10
+          ],
+          "additives": "",
+          "desc": "hovädzia sviečkovica, cesnak, cibuľa, vajce, horčica, worčester, hrianka",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pd2",
+          "name": "Domáca hrianka s trhaným bravčovým mäsom a údeným syrom",
+          "price": 8.9,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "trhané bravčové mäso, majonéza",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "polievky",
+      "cat": "Polievky",
+      "kind": "food",
+      "note": "",
+      "sort": 1,
+      "items": [
+        {
+          "id": "po1",
+          "name": "Slepačí vývar",
+          "price": 4.1,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [
+            1,
+            3,
+            9
+          ],
+          "additives": "",
+          "desc": "s mäsom, domácimi rezancami a zeleninou",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "po2",
+          "name": "Cesnaková polievka so syrom",
+          "price": 4.1,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "silný vývar, cesnak, syr, krutóny",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "po3",
+          "name": "Paradajková polievka",
+          "price": 4.5,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "paradajky, koreňová zelenina, parmezán",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "salaty",
+      "cat": "Šaláty",
+      "kind": "food",
+      "note": "",
+      "sort": 2,
+      "items": [
+        {
+          "id": "sa1",
+          "name": "Cézar šalát",
+          "price": 8.9,
+          "weight": {
+            "value": 350,
+            "unit": "g",
+            "text": "350g"
+          },
+          "allergens": [
+            3,
+            4,
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "listový šalát, cherry paradajky, cézar dressing s parmezánom, krutóny",
+          "no": null,
+          "sort": 0,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Doplnky",
+              "options": [
+                {
+                  "name": "100g kuracie prsia",
+                  "price": 3
+                },
+                {
+                  "name": "100g syr Halloumi",
+                  "price": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sa2",
+          "name": "Letný šalát s bryndzou, karamelizovaným jabĺčkom a chrumkom",
+          "price": 11.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "listový šalát, bryndza, karamelizované jablko, dresing",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "cestoviny",
+      "cat": "Cestoviny",
+      "kind": "food",
+      "note": "",
+      "sort": 3,
+      "items": [
+        {
+          "id": "ce1",
+          "name": "Tagliatelle s paradajkovou kompozíciou a parmezánom",
+          "price": 9.5,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Doplnky",
+              "options": [
+                {
+                  "name": "100g losos",
+                  "price": 5
+                },
+                {
+                  "name": "100g syr Halloumi",
+                  "price": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ce2",
+          "name": "Krémové smotanovo-citrónové tagliatelle",
+          "price": 9.5,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "smotana, parmezán",
+          "no": null,
+          "sort": 1,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Doplnky",
+              "options": [
+                {
+                  "name": "100g kuracie prsia",
+                  "price": 3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jedla-z-liptova",
+      "cat": "Jedlá z Liptova",
+      "kind": "food",
+      "note": "",
+      "sort": 4,
+      "items": [
+        {
+          "id": "lp1",
+          "name": "Halušky s bryndzou",
+          "price": 10.9,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "slanina",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "lp2",
+          "name": "Bravčový rezeň v panko strúhanke so zemiakovým pyré a cesnakovou majonézou",
+          "price": 12.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "lp3",
+          "name": "Vyprážaný údený syr s baby pečenými zemiakmi",
+          "price": 11.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "s tatárskou omáčkou",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "hlavne-jedla-bez-priloh",
+      "cat": "Hlavné jedlá bez príloh",
+      "kind": "food",
+      "note": "",
+      "sort": 5,
+      "items": [
+        {
+          "id": "hb1",
+          "name": "Kurací steak Sous-Vide",
+          "price": 8.5,
+          "weight": {
+            "value": 180,
+            "unit": "g",
+            "text": "180g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Omáčka",
+              "max": 1,
+              "options": [
+                {
+                  "name": "0,1l syrová omáčka",
+                  "price": 2
+                },
+                {
+                  "name": "0,1l demi-glace omáčka",
+                  "price": 2
+                }
+              ]
+            },
+            {
+              "title": "Príloha",
+              "max": 2,
+              "options": [
+                {
+                  "name": "Zemiakové hranolky",
+                  "price": 2.9
+                },
+                {
+                  "name": "Batátové hranolky",
+                  "price": 3.9
+                },
+                {
+                  "name": "Baby pečené zemiaky",
+                  "price": 2.9
+                },
+                {
+                  "name": "Ryža",
+                  "price": 2.3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "hb2",
+          "name": "Bravčová panenka Sous-Vide",
+          "price": 9.5,
+          "weight": {
+            "value": 170,
+            "unit": "g",
+            "text": "170g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Omáčka",
+              "max": 1,
+              "options": [
+                {
+                  "name": "0,1l syrová omáčka",
+                  "price": 2
+                },
+                {
+                  "name": "0,1l demi-glace omáčka",
+                  "price": 2
+                }
+              ]
+            },
+            {
+              "title": "Príloha",
+              "max": 2,
+              "options": [
+                {
+                  "name": "Zemiakové hranolky",
+                  "price": 2.9
+                },
+                {
+                  "name": "Batátové hranolky",
+                  "price": 3.9
+                },
+                {
+                  "name": "Baby pečené zemiaky",
+                  "price": 2.9
+                },
+                {
+                  "name": "Ryža",
+                  "price": 2.3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hlavne-jedla",
+      "cat": "Hlavné jedlá",
+      "kind": "food",
+      "note": "",
+      "sort": 6,
+      "items": [
+        {
+          "id": "hj1",
+          "name": "Grilovaný losos, zemiaky & karfiol v dvoch pyré, smotanovo-citrónová omáčka",
+          "price": 15.5,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/200g"
+          },
+          "allergens": [
+            4,
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "hj2",
+          "name": "Kurací steak s jarnou zeleninou a karfiolovým pyré",
+          "price": 12.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "350/180g"
+          },
+          "allergens": [
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "hj3",
+          "name": "Krémové Bianco rizoto s kuracím mäsom a baby mrkvou",
+          "price": 12.9,
+          "weight": {
+            "value": 350,
+            "unit": "g",
+            "text": "350g"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "hj4",
+          "name": "BBQ Bravčové rebrá s baby opekanými zemiakmi a paradajkovo-citrónovou salsou",
+          "price": 15.5,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "500/150g"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "hj5",
+          "name": "Bravčová panenka na omáčke z čierneho cesnaku, štuchaný zemiak so slaninou a šalotkou, karamelizované jabĺčko",
+          "price": 15.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/200g"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "hj6",
+          "name": "Hovädzia hruď so zemiakovým pyré a omáčkou z portského vína",
+          "price": 19.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            9,
+            10
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "burger-s-hranolkami",
+      "cat": "Burger s hranolkami",
+      "kind": "food",
+      "note": "Namiesto hovädzieho mäsa použijeme na požiadanie syr Halloumi.",
+      "sort": 7,
+      "items": [
+        {
+          "id": "bu1",
+          "name": "Cheeseburger",
+          "price": 13.9,
+          "weight": {
+            "value": 400,
+            "unit": "g",
+            "text": "400g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            11
+          ],
+          "additives": "",
+          "desc": "hovädzie mäso, Jack Daniels omáčka, červená cibuľa, slaninový džem, paradajka, syr Cheddar, listový šalát, majonéza, hranolky, tatárska omáčka",
+          "no": null,
+          "sort": 0,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Mäso",
+              "max": 1,
+              "options": [
+                {
+                  "name": "Syr Halloumi namiesto hovädzieho mäsa",
+                  "price": 0
+                }
+              ]
+            },
+            {
+              "title": "Doplnky",
+              "options": [
+                {
+                  "name": "King size",
+                  "price": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "bu2",
+          "name": "Jalapeňos burger",
+          "price": 13.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "350/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            11
+          ],
+          "additives": "",
+          "desc": "hovädzie mäso, Jalapeňos omáčka, červená cibuľa, slaninový džem, slanina, paradajka, listový šalát, majonéza, hranolky, tatárska omáčka",
+          "no": null,
+          "sort": 1,
+          "online": true,
+          "addonGroups": [
+            {
+              "title": "Mäso",
+              "max": 1,
+              "options": [
+                {
+                  "name": "Syr Halloumi namiesto hovädzieho mäsa",
+                  "price": 0
+                }
+              ]
+            },
+            {
+              "title": "Doplnky",
+              "options": [
+                {
+                  "name": "King size",
+                  "price": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "bu3",
+          "name": "Burger Pulled s trhaným mäskom",
+          "price": 13.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "350/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            11
+          ],
+          "additives": "",
+          "desc": "trhané bravčové mäso, slaninový džem, červená cibuľa, cheddar, vajce, paradajka, listový šalát, hranolky, tatárska omáčka",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "pizza",
+      "cat": "Pizza",
+      "kind": "food",
+      "note": "Doplnky si vyberiete po pridaní do košíka.",
+      "sort": 8,
+      "items": [
+        {
+          "id": "pz1",
+          "name": "Margherita",
+          "price": 8.4,
+          "weight": {
+            "value": 320,
+            "unit": "g",
+            "text": "320g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, bylinky",
+          "no": 1,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pz2",
+          "name": "Classica",
+          "price": 8.9,
+          "weight": {
+            "value": 420,
+            "unit": "g",
+            "text": "420g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, kukurica, bylinky",
+          "no": 2,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "pz3",
+          "name": "Prosciutto",
+          "price": 11.4,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, prosciutto, rukola, parmezán, bylinky",
+          "no": 3,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "pz4",
+          "name": "Capricciosa",
+          "price": 8.9,
+          "weight": {
+            "value": 460,
+            "unit": "g",
+            "text": "460g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, šampiňóny čerstvé, bylinky",
+          "no": 4,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "pz5",
+          "name": "All Salame",
+          "price": 10.9,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, saláma, slanina, bylinky",
+          "no": 5,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "pz6",
+          "name": "Pollo",
+          "price": 10.9,
+          "weight": {
+            "value": 480,
+            "unit": "g",
+            "text": "480g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "smotanový základ, mozzarella, kuracie mäso, brokolica, niva, bylinky",
+          "no": 6,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "pz7",
+          "name": "Roma",
+          "price": 11.5,
+          "weight": {
+            "value": 480,
+            "unit": "g",
+            "text": "480g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, šampiňóny čerstvé, kukurica, slanina, feferóny, saláma, bylinky",
+          "no": 7,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "pz8",
+          "name": "Al Capone",
+          "price": 9.9,
+          "weight": {
+            "value": 440,
+            "unit": "g",
+            "text": "440g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, cesnak, mozzarella, saláma, syr niva, olivy, bylinky",
+          "no": 8,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "pz9",
+          "name": "Hawai",
+          "price": 9.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, ananás, bylinky",
+          "no": 9,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "pz10",
+          "name": "Quattro Formaggi",
+          "price": 10.9,
+          "weight": {
+            "value": 440,
+            "unit": "g",
+            "text": "440g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, syr niva, eidam, parmezán",
+          "no": 10,
+          "sort": 9,
+          "online": true
+        },
+        {
+          "id": "pz11",
+          "name": "Pizza s trhaným mäsom",
+          "price": 10.9,
+          "weight": {
+            "value": 400,
+            "unit": "g",
+            "text": "400g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, hovädzie trhané mäso, cibuľa, cheddar, rukola, bylinky",
+          "no": 11,
+          "sort": 10,
+          "online": true
+        },
+        {
+          "id": "pz12",
+          "name": "Slovakia",
+          "price": 10.4,
+          "weight": {
+            "value": 410,
+            "unit": "g",
+            "text": "410g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "kyslá smotana, bryndza, parmezán, slanina, karamelizovaná cibuľa, šunka, pažítka",
+          "no": 12,
+          "sort": 11,
+          "online": true
+        },
+        {
+          "id": "pz13",
+          "name": "Mista",
+          "price": 10.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, šampiňóny čerstvé, kukurica, olivy, vajce, bylinky",
+          "no": 13,
+          "sort": 12,
+          "online": true
+        },
+        {
+          "id": "pz14",
+          "name": "Mexicana",
+          "price": 10.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, saláma, kukurica, mexická fazuľa, feferóny, kyslá smotana, chili omáčka, bylinky",
+          "no": 14,
+          "sort": 13,
+          "online": true
+        },
+        {
+          "id": "pz15",
+          "name": "Vila27",
+          "price": 10.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, saláma, pikantná klobása, čerstvé paradajky, bylinky",
+          "no": 15,
+          "sort": 14,
+          "online": true
+        },
+        {
+          "id": "pz16",
+          "name": "Pepperoni",
+          "price": 9.9,
+          "weight": {
+            "value": 420,
+            "unit": "g",
+            "text": "420g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, saláma pepperoni, červená cibuľa, bylinky",
+          "no": 16,
+          "sort": 15,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "prilohy",
+      "cat": "Prílohy",
+      "kind": "food",
+      "note": "",
+      "sort": 9,
+      "items": [
+        {
+          "id": "pr1",
+          "name": "Zemiakové hranolky",
+          "price": 2.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pr2",
+          "name": "Batátové hranolky",
+          "price": 3.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "pr3",
+          "name": "Baby pečené zemiaky",
+          "price": 2.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "pr4",
+          "name": "Ryža",
+          "price": 2.3,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "pr5",
+          "name": "Grilovaná zelenina",
+          "price": 3.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "cuketa, šampiňóny, farebná paprika, tekvica",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "pr6",
+          "name": "Miešaný zeleninový šalát",
+          "price": 3.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "listový šalát, paradajka, paprika, uhorka, dresing",
+          "no": null,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "pr7",
+          "name": "Pizza chlieb",
+          "price": 3.5,
+          "weight": {
+            "value": 100,
+            "unit": "g",
+            "text": "100g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "cesnak",
+          "no": null,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "pr8",
+          "name": "Kečup",
+          "price": 1.5,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "pr9",
+          "name": "Tatárska omáčka",
+          "price": 1.5,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [
+            3,
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "pr10",
+          "name": "Dressing – cesnakový, cézar",
+          "price": 2.2,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 9,
+          "online": true
+        },
+        {
+          "id": "pr11",
+          "name": "Domáca omáčka – Jack Daniels, BBQ, Jalapeňos",
+          "price": 2.9,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 10,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "dezerty",
+      "cat": "Dezerty",
+      "kind": "food",
+      "note": "",
+      "sort": 10,
+      "items": [
+        {
+          "id": "de1",
+          "name": "Domáce palacinky s nutelou alebo džemom",
+          "price": 5.9,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "so šľahačkou",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "de2",
+          "name": "Lávový koláč s horúcimi malinami a šľahačkou",
+          "price": 5.9,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "vino-flaskove",
+      "cat": "Víno fľaškové",
+      "kind": "drink",
+      "note": "Alergén: siričitany.",
+      "sort": 11,
+      "items": [
+        {
+          "id": "vf1",
+          "name": "Devín KARPATSKÁ PERLA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "vf2",
+          "name": "Rulandské šedé CHOVANIEC A KRAJČÍROVIČ",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "vf3",
+          "name": "André K. PERLA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "vf4",
+          "name": "Alibernet CHOVANIEC A KRAJČÍROVIČ",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "vf5",
+          "name": "Rizling vlašský NICHTA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "vf6",
+          "name": "Cabernet Sauvignon NICHTA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "pivo",
+      "cat": "Pivo",
+      "kind": "drink",
+      "note": "Alergén: jačmenný slad.",
+      "sort": 12,
+      "items": [
+        {
+          "id": "pv3",
+          "name": "Šariš tmavý 12% fľ.",
+          "price": 2.8,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pv4",
+          "name": "Radegast Birell nealko fľ.",
+          "price": 2.8,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "nealko",
+      "cat": "Nealko",
+      "kind": "drink",
+      "note": "Na rozvoz a odber ponúkame nealko v 0,5l fľašiach.",
+      "sort": 13,
+      "items": [
+        {
+          "id": "ne11",
+          "name": "Coca-Cola",
+          "price": 3,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "ne12",
+          "name": "Fuze Tea jahoda & aloe vera",
+          "price": 3,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "ne13",
+          "name": "Römerquelle sýtená",
+          "price": 3,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    }
+  ],
+  "jedalnylistok": [
+    {
+      "id": "predjedla",
+      "cat": "Predjedlá",
+      "kind": "food",
+      "note": "",
+      "sort": 0,
+      "items": [
+        {
+          "id": "pd1",
+          "name": "Tatársky biftek",
+          "price": 12.5,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            3,
+            10
+          ],
+          "additives": "",
+          "desc": "hovädzia sviečkovica, cesnak, cibuľa, vajce, horčica, worčester, hrianka",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pd2",
+          "name": "Domáca hrianka s trhaným bravčovým mäsom a údeným syrom",
+          "price": 8.9,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "trhané bravčové mäso, majonéza",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "polievky",
+      "cat": "Polievky",
+      "kind": "food",
+      "note": "",
+      "sort": 1,
+      "items": [
+        {
+          "id": "po1",
+          "name": "Slepačí vývar",
+          "price": 4.1,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [
+            1,
+            3,
+            9
+          ],
+          "additives": "",
+          "desc": "s mäsom, domácimi rezancami a zeleninou",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "po2",
+          "name": "Cesnaková polievka so syrom",
+          "price": 4.1,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "silný vývar, cesnak, syr, krutóny",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "po3",
+          "name": "Paradajková polievka",
+          "price": 4.5,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "paradajky, koreňová zelenina, parmezán",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "salaty",
+      "cat": "Šaláty",
+      "kind": "food",
+      "note": "",
+      "sort": 2,
+      "items": [
+        {
+          "id": "sa1",
+          "name": "Cézar šalát",
+          "price": 8.9,
+          "weight": {
+            "value": 350,
+            "unit": "g",
+            "text": "350g"
+          },
+          "allergens": [
+            3,
+            4,
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "listový šalát, cherry paradajky, cézar dressing s parmezánom, krutóny",
+          "no": null,
+          "sort": 0,
+          "online": true,
+          "menuAddons": [
+            {
+              "name": "100g kuracie prsia",
+              "price": 3
+            },
+            {
+              "name": "100g syr Halloumi",
+              "price": 3
+            }
+          ]
+        },
+        {
+          "id": "sa2",
+          "name": "Letný šalát s bryndzou, karamelizovaným jabĺčkom a chrumkom",
+          "price": 11.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "listový šalát, bryndza, karamelizované jablko, dresing",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "cestoviny",
+      "cat": "Cestoviny",
+      "kind": "food",
+      "note": "",
+      "sort": 3,
+      "items": [
+        {
+          "id": "ce1",
+          "name": "Tagliatelle s paradajkovou kompozíciou a parmezánom",
+          "price": 9.5,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true,
+          "menuAddons": [
+            {
+              "name": "100g losos",
+              "price": 5
+            },
+            {
+              "name": "100g syr Halloumi",
+              "price": 3
+            }
+          ]
+        },
+        {
+          "id": "ce2",
+          "name": "Krémové smotanovo-citrónové tagliatelle",
+          "price": 9.5,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "smotana, parmezán",
+          "no": null,
+          "sort": 1,
+          "online": true,
+          "menuAddons": [
+            {
+              "name": "100g kuracie prsia",
+              "price": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jedla-z-liptova",
+      "cat": "Jedlá z Liptova",
+      "kind": "food",
+      "note": "",
+      "sort": 4,
+      "items": [
+        {
+          "id": "lp1",
+          "name": "Halušky s bryndzou",
+          "price": 10.9,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "slanina",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "lp2",
+          "name": "Bravčový rezeň v panko strúhanke so zemiakovým pyré a cesnakovou majonézou",
+          "price": 12.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "lp3",
+          "name": "Vyprážaný údený syr s baby pečenými zemiakmi",
+          "price": 11.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "s tatárskou omáčkou",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "hlavne-jedla-bez-priloh",
+      "cat": "Hlavné jedlá bez príloh",
+      "kind": "food",
+      "note": "",
+      "sort": 5,
+      "items": [
+        {
+          "id": "hb1",
+          "name": "Kurací steak Sous-Vide",
+          "price": 8.5,
+          "weight": {
+            "value": 180,
+            "unit": "g",
+            "text": "180g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "hb2",
+          "name": "Bravčová panenka Sous-Vide",
+          "price": 9.5,
+          "weight": {
+            "value": 170,
+            "unit": "g",
+            "text": "170g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ],
+      "extras": [
+        {
+          "name": "0,1l syrová omáčka",
+          "price": 2
+        },
+        {
+          "name": "0,1l demi-glace omáčka",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "hlavne-jedla",
+      "cat": "Hlavné jedlá",
+      "kind": "food",
+      "note": "",
+      "sort": 6,
+      "items": [
+        {
+          "id": "hj1",
+          "name": "Grilovaný losos, zemiaky & karfiol v dvoch pyré, smotanovo-citrónová omáčka",
+          "price": 15.5,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/200g"
+          },
+          "allergens": [
+            4,
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "hj2",
+          "name": "Kurací steak s jarnou zeleninou a karfiolovým pyré",
+          "price": 12.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "350/180g"
+          },
+          "allergens": [
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "hj3",
+          "name": "Krémové Bianco rizoto s kuracím mäsom a baby mrkvou",
+          "price": 12.9,
+          "weight": {
+            "value": 350,
+            "unit": "g",
+            "text": "350g"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "hj4",
+          "name": "BBQ Bravčové rebrá s baby opekanými zemiakmi a paradajkovo-citrónovou salsou",
+          "price": 15.5,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "500/150g"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "hj5",
+          "name": "Bravčová panenka na omáčke z čierneho cesnaku, štuchaný zemiak so slaninou a šalotkou, karamelizované jabĺčko",
+          "price": 15.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/200g"
+          },
+          "allergens": [
+            7,
+            9
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "hj6",
+          "name": "Hovädzia hruď so zemiakovým pyré a omáčkou z portského vína",
+          "price": 19.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "400/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            9,
+            10
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "burger-s-hranolkami",
+      "cat": "Burger s hranolkami",
+      "kind": "food",
+      "note": "Namiesto hovädzieho mäsa použijeme na požiadanie syr Halloumi.",
+      "sort": 7,
+      "items": [
+        {
+          "id": "bu1",
+          "name": "Cheeseburger",
+          "price": 13.9,
+          "weight": {
+            "value": 400,
+            "unit": "g",
+            "text": "400g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            11
+          ],
+          "additives": "",
+          "desc": "hovädzie mäso, Jack Daniels omáčka, červená cibuľa, slaninový džem, paradajka, syr Cheddar, listový šalát, majonéza, hranolky, tatárska omáčka",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "bu2",
+          "name": "Jalapeňos burger",
+          "price": 13.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "350/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            11
+          ],
+          "additives": "",
+          "desc": "hovädzie mäso, Jalapeňos omáčka, červená cibuľa, slaninový džem, slanina, paradajka, listový šalát, majonéza, hranolky, tatárska omáčka",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "bu3",
+          "name": "Burger Pulled s trhaným mäskom",
+          "price": 13.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": "350/150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7,
+            11
+          ],
+          "additives": "",
+          "desc": "trhané bravčové mäso, slaninový džem, červená cibuľa, cheddar, vajce, paradajka, listový šalát, hranolky, tatárska omáčka",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ],
+      "extras": [
+        {
+          "name": "King size",
+          "price": 3
+        }
+      ]
+    },
+    {
+      "id": "pizza",
+      "cat": "Pizza",
+      "kind": "food",
+      "note": "Doplnky si vyberiete po pridaní do košíka.",
+      "sort": 8,
+      "items": [
+        {
+          "id": "pz1",
+          "name": "Margherita",
+          "price": 8.4,
+          "weight": {
+            "value": 320,
+            "unit": "g",
+            "text": "320g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, bylinky",
+          "no": 1,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pz2",
+          "name": "Classica",
+          "price": 8.9,
+          "weight": {
+            "value": 420,
+            "unit": "g",
+            "text": "420g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, kukurica, bylinky",
+          "no": 2,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "pz3",
+          "name": "Prosciutto",
+          "price": 11.4,
+          "weight": {
+            "value": 380,
+            "unit": "g",
+            "text": "380g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, prosciutto, rukola, parmezán, bylinky",
+          "no": 3,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "pz4",
+          "name": "Capricciosa",
+          "price": 8.9,
+          "weight": {
+            "value": 460,
+            "unit": "g",
+            "text": "460g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, šampiňóny čerstvé, bylinky",
+          "no": 4,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "pz5",
+          "name": "All Salame",
+          "price": 10.9,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, saláma, slanina, bylinky",
+          "no": 5,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "pz6",
+          "name": "Pollo",
+          "price": 10.9,
+          "weight": {
+            "value": 480,
+            "unit": "g",
+            "text": "480g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "smotanový základ, mozzarella, kuracie mäso, brokolica, niva, bylinky",
+          "no": 6,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "pz7",
+          "name": "Roma",
+          "price": 11.5,
+          "weight": {
+            "value": 480,
+            "unit": "g",
+            "text": "480g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, šampiňóny čerstvé, kukurica, slanina, feferóny, saláma, bylinky",
+          "no": 7,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "pz8",
+          "name": "Al Capone",
+          "price": 9.9,
+          "weight": {
+            "value": 440,
+            "unit": "g",
+            "text": "440g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, cesnak, mozzarella, saláma, syr niva, olivy, bylinky",
+          "no": 8,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "pz9",
+          "name": "Hawai",
+          "price": 9.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, ananás, bylinky",
+          "no": 9,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "pz10",
+          "name": "Quattro Formaggi",
+          "price": 10.9,
+          "weight": {
+            "value": 440,
+            "unit": "g",
+            "text": "440g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, syr niva, eidam, parmezán",
+          "no": 10,
+          "sort": 9,
+          "online": true
+        },
+        {
+          "id": "pz11",
+          "name": "Pizza s trhaným mäsom",
+          "price": 10.9,
+          "weight": {
+            "value": 400,
+            "unit": "g",
+            "text": "400g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, hovädzie trhané mäso, cibuľa, cheddar, rukola, bylinky",
+          "no": 11,
+          "sort": 10,
+          "online": true
+        },
+        {
+          "id": "pz12",
+          "name": "Slovakia",
+          "price": 10.4,
+          "weight": {
+            "value": 410,
+            "unit": "g",
+            "text": "410g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "kyslá smotana, bryndza, parmezán, slanina, karamelizovaná cibuľa, šunka, pažítka",
+          "no": 12,
+          "sort": 11,
+          "online": true
+        },
+        {
+          "id": "pz13",
+          "name": "Mista",
+          "price": 10.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, šampiňóny čerstvé, kukurica, olivy, vajce, bylinky",
+          "no": 13,
+          "sort": 12,
+          "online": true
+        },
+        {
+          "id": "pz14",
+          "name": "Mexicana",
+          "price": 10.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, šunka, saláma, kukurica, mexická fazuľa, feferóny, kyslá smotana, chili omáčka, bylinky",
+          "no": 14,
+          "sort": 13,
+          "online": true
+        },
+        {
+          "id": "pz15",
+          "name": "Vila27",
+          "price": 10.4,
+          "weight": {
+            "value": 450,
+            "unit": "g",
+            "text": "450g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, saláma, pikantná klobása, čerstvé paradajky, bylinky",
+          "no": 15,
+          "sort": 14,
+          "online": true
+        },
+        {
+          "id": "pz16",
+          "name": "Pepperoni",
+          "price": 9.9,
+          "weight": {
+            "value": 420,
+            "unit": "g",
+            "text": "420g"
+          },
+          "allergens": [
+            1,
+            7
+          ],
+          "additives": "",
+          "desc": "paradajková omáčka, mozzarella, saláma pepperoni, červená cibuľa, bylinky",
+          "no": 16,
+          "sort": 15,
+          "online": true
+        }
+      ],
+      "extras": [
+        {
+          "name": "Bezlepkové cesto",
+          "price": 2
+        }
+      ]
+    },
+    {
+      "id": "prilohy",
+      "cat": "Prílohy",
+      "kind": "food",
+      "note": "",
+      "sort": 9,
+      "items": [
+        {
+          "id": "pr1",
+          "name": "Zemiakové hranolky",
+          "price": 2.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pr2",
+          "name": "Batátové hranolky",
+          "price": 3.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "pr3",
+          "name": "Baby pečené zemiaky",
+          "price": 2.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "pr4",
+          "name": "Ryža",
+          "price": 2.3,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "pr5",
+          "name": "Grilovaná zelenina",
+          "price": 3.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "cuketa, šampiňóny, farebná paprika, tekvica",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "pr6",
+          "name": "Miešaný zeleninový šalát",
+          "price": 3.9,
+          "weight": {
+            "value": 200,
+            "unit": "g",
+            "text": "200g"
+          },
+          "allergens": [
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "listový šalát, paradajka, paprika, uhorka, dresing",
+          "no": null,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "pr7",
+          "name": "Pizza chlieb",
+          "price": 3.5,
+          "weight": {
+            "value": 100,
+            "unit": "g",
+            "text": "100g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "cesnak",
+          "no": null,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "pr8",
+          "name": "Kečup",
+          "price": 1.5,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "pr9",
+          "name": "Tatárska omáčka",
+          "price": 1.5,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [
+            3,
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "pr10",
+          "name": "Dressing – cesnakový, cézar",
+          "price": 2.2,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [
+            7,
+            10
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 9,
+          "online": true
+        },
+        {
+          "id": "pr11",
+          "name": "Domáca omáčka – Jack Daniels, BBQ, Jalapeňos",
+          "price": 2.9,
+          "weight": {
+            "value": 50,
+            "unit": "g",
+            "text": "50g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 10,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "dezerty",
+      "cat": "Dezerty",
+      "kind": "food",
+      "note": "",
+      "sort": 10,
+      "items": [
+        {
+          "id": "de1",
+          "name": "Domáce palacinky s nutelou alebo džemom",
+          "price": 5.9,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "so šľahačkou",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "de2",
+          "name": "Lávový koláč s horúcimi malinami a šľahačkou",
+          "price": 5.9,
+          "weight": {
+            "value": 150,
+            "unit": "g",
+            "text": "150g"
+          },
+          "allergens": [
+            1,
+            3,
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "vodka",
+      "cat": "Vodka",
+      "kind": "drink",
+      "note": "",
+      "sort": 11,
+      "items": [
+        {
+          "id": "vd1",
+          "name": "Absolut 40%",
+          "price": 2.8,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "destilaty",
+      "cat": "Destiláty",
+      "kind": "drink",
+      "note": "",
+      "sort": 12,
+      "items": [
+        {
+          "id": "ds1",
+          "name": "Borovička Konifer 37,5%",
+          "price": 2.6,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "ds2",
+          "name": "Gin Beefeater 40%",
+          "price": 2.9,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "ds3",
+          "name": "Hruškovica Jelínek 42%",
+          "price": 3,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "ds4",
+          "name": "Slivovica Jelínek 50%",
+          "price": 3,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "ds5",
+          "name": "Marhuľovica Jelínek 42%",
+          "price": 3.9,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "rum",
+      "cat": "Rum",
+      "kind": "drink",
+      "note": "",
+      "sort": 13,
+      "items": [
+        {
+          "id": "rm1",
+          "name": "Havana 3yo 37,5%",
+          "price": 2.8,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "rm2",
+          "name": "Captain Morgan 35%",
+          "price": 2.6,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "rm3",
+          "name": "Don Papa 40%",
+          "price": 4.9,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "rm4",
+          "name": "Bumbu 40%",
+          "price": 3.9,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "brandy",
+      "cat": "Brandy",
+      "kind": "drink",
+      "note": "",
+      "sort": 14,
+      "items": [
+        {
+          "id": "br1",
+          "name": "KBŠ 38%",
+          "price": 4.9,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "br2",
+          "name": "Ararat 7yo 40%",
+          "price": 3.2,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "whiskey",
+      "cat": "Whiskey",
+      "kind": "drink",
+      "note": "",
+      "sort": 15,
+      "items": [
+        {
+          "id": "wh1",
+          "name": "Jameson 40%",
+          "price": 3.2,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "wh2",
+          "name": "Chivas Regal 40%",
+          "price": 4.9,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "wh3",
+          "name": "Jack Daniels 40%",
+          "price": 3.5,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "liker",
+      "cat": "Likér",
+      "kind": "drink",
+      "note": "",
+      "sort": 16,
+      "items": [
+        {
+          "id": "lk1",
+          "name": "Becherovka 38%",
+          "price": 2.8,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "lk2",
+          "name": "Demänovka 38%",
+          "price": 2.8,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "lk3",
+          "name": "Fernet Stock 40%",
+          "price": 2.6,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "lk4",
+          "name": "Fernet Stock Citrus 30%",
+          "price": 2.6,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "lk5",
+          "name": "Jägermeister 35%",
+          "price": 3.2,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "lk6",
+          "name": "Tatranský čaj 52%",
+          "price": 2.8,
+          "weight": {
+            "value": 40,
+            "unit": "ml",
+            "text": "0,04l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "miesane-napoje",
+      "cat": "Miešané nápoje",
+      "kind": "drink",
+      "note": "",
+      "sort": 17,
+      "items": [
+        {
+          "id": "mx1",
+          "name": "Mojito",
+          "price": 4.6,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,04l havana, cukor, limetková šťava, 10g mäta, 0,2l sóda",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "mx2",
+          "name": "Caipiroska",
+          "price": 3.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,04l absolut, limetka, cukrový sirup",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "mx3",
+          "name": "Tom Collins",
+          "price": 4.4,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,04l gin beefeater, citrónová šťava, cukrový sirup, sóda",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "mx4",
+          "name": "Piña colada",
+          "price": 4.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,04l havana, 0,04l kokosový likér, 0,1l ananásový džús",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "mx5",
+          "name": "Mimosa",
+          "price": 3.6,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,1l prosecco, 0,1l pomarančový džús",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "mx6",
+          "name": "Aperol Spritz",
+          "price": 4.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,06l prosecco, 0,04l aperol, 0,02l sóda",
+          "no": null,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "mx7",
+          "name": "Hugo",
+          "price": 4.4,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,1l prosecco, 0,05l sóda, bazový sirup, mäta",
+          "no": null,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "mx8",
+          "name": "Cuba libre",
+          "price": 4.4,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "0,04l havana, 0,15l coca cola, limetka",
+          "no": null,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "mx9",
+          "name": "Tropical matcha fizz",
+          "price": 4.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "matcha, ananás, sóda, ľad",
+          "no": null,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "mx10",
+          "name": "Strawberry matcha latte",
+          "price": 4.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "matcha, jahodové pyré, mlieko",
+          "no": null,
+          "sort": 9,
+          "online": true
+        },
+        {
+          "id": "mx11",
+          "name": "Sunset matcha",
+          "price": 4.9,
+          "weight": {
+            "value": null,
+            "unit": "g",
+            "text": ""
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "matcha, grep, sóda, sirup, ľad",
+          "no": null,
+          "sort": 10,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "sekt",
+      "cat": "Sekt",
+      "kind": "drink",
+      "note": "Všetky druhy sektu obsahujú alergén: siričitany.",
+      "sort": 18,
+      "items": [
+        {
+          "id": "sk1",
+          "name": "Hubert de Luxe",
+          "price": 15,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "sk2",
+          "name": "Prosecco Frizante",
+          "price": 1.9,
+          "weight": {
+            "value": 100,
+            "unit": "ml",
+            "text": "0,10l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "vino-rozlievane",
+      "cat": "Víno rozlievané",
+      "kind": "drink",
+      "note": "Alergén: siričitany.",
+      "sort": 19,
+      "items": [
+        {
+          "id": "vr1",
+          "name": "Müller Thurgau PAVELKA",
+          "price": 2,
+          "weight": {
+            "value": 100,
+            "unit": "ml",
+            "text": "0,10l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "vr2",
+          "name": "Frankovka modrá PAVELKA",
+          "price": 2,
+          "weight": {
+            "value": 100,
+            "unit": "ml",
+            "text": "0,10l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "vr3",
+          "name": "Cabernet Rosé PAVELKA",
+          "price": 2,
+          "weight": {
+            "value": 100,
+            "unit": "ml",
+            "text": "0,10l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "vino-flaskove",
+      "cat": "Víno fľaškové",
+      "kind": "drink",
+      "note": "Alergén: siričitany.",
+      "sort": 20,
+      "items": [
+        {
+          "id": "vf1",
+          "name": "Devín KARPATSKÁ PERLA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "vf2",
+          "name": "Rulandské šedé CHOVANIEC A KRAJČÍROVIČ",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "vf3",
+          "name": "André K. PERLA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "vf4",
+          "name": "Alibernet CHOVANIEC A KRAJČÍROVIČ",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "vf5",
+          "name": "Rizling vlašský NICHTA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "vf6",
+          "name": "Cabernet Sauvignon NICHTA",
+          "price": 21,
+          "weight": {
+            "value": 750,
+            "unit": "ml",
+            "text": "0,75l"
+          },
+          "allergens": [
+            12
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "pivo",
+      "cat": "Pivo",
+      "kind": "drink",
+      "note": "Alergén: jačmenný slad.",
+      "sort": 21,
+      "items": [
+        {
+          "id": "pv1",
+          "name": "Plzeň 12%",
+          "price": 3,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "pv2",
+          "name": "Plzeň 12%",
+          "price": 1.9,
+          "weight": {
+            "value": 300,
+            "unit": "ml",
+            "text": "0,3l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "pv3",
+          "name": "Šariš tmavý 12% fľ.",
+          "price": 2.8,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "pv4",
+          "name": "Radegast Birell nealko fľ.",
+          "price": 2.8,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "pv5",
+          "name": "Radler nealko pomelo-grep",
+          "price": 2.8,
+          "weight": {
+            "value": 500,
+            "unit": "ml",
+            "text": "0,5l"
+          },
+          "allergens": [],
+          "additives": "jačmenný slad",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "nealko",
+      "cat": "Nealko",
+      "kind": "drink",
+      "note": "",
+      "sort": 22,
+      "items": [
+        {
+          "id": "ne1",
+          "name": "Coca-Cola, Zero",
+          "price": 2.7,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "ne2",
+          "name": "Fanta",
+          "price": 2.7,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "ne3",
+          "name": "Sprite",
+          "price": 2.7,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "ne4",
+          "name": "Tonic, Zázvor, Rosé",
+          "price": 2.7,
+          "weight": {
+            "value": 250,
+            "unit": "ml",
+            "text": "0,25l"
+          },
+          "allergens": [],
+          "additives": "E150d",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "ne5",
+          "name": "Ľadový čaj",
+          "price": 2.7,
+          "weight": {
+            "value": 250,
+            "unit": "ml",
+            "text": "0,25l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "ne6",
+          "name": "Cappy džús",
+          "price": 2.7,
+          "weight": {
+            "value": 250,
+            "unit": "ml",
+            "text": "0,25l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "ne7",
+          "name": "Römerquelle",
+          "price": 2.7,
+          "weight": {
+            "value": 330,
+            "unit": "ml",
+            "text": "0,33l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "ne8",
+          "name": "Čapovaná kofola",
+          "price": 0.5,
+          "weight": {
+            "value": 100,
+            "unit": "ml",
+            "text": "0,10l"
+          },
+          "allergens": [],
+          "additives": "E150d, E211",
+          "desc": "",
+          "no": null,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "ne9",
+          "name": "Red Bull plech",
+          "price": 3.5,
+          "weight": {
+            "value": 250,
+            "unit": "ml",
+            "text": "0,25l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "ne10",
+          "name": "sóda, čistá voda",
+          "price": 0.5,
+          "weight": {
+            "value": 100,
+            "unit": "ml",
+            "text": "0,10l"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 9,
+          "online": true
+        }
+      ]
+    },
+    {
+      "id": "teple-napoje-doplnky",
+      "cat": "Teplé nápoje, doplnky",
+      "kind": "drink",
+      "note": "",
+      "sort": 23,
+      "items": [
+        {
+          "id": "tp1",
+          "name": "Espresso",
+          "price": 2.7,
+          "weight": {
+            "value": 8,
+            "unit": "g",
+            "text": "8g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 0,
+          "online": true
+        },
+        {
+          "id": "tp2",
+          "name": "Caffè Latte",
+          "price": 3.2,
+          "weight": {
+            "value": 8,
+            "unit": "g",
+            "text": "8g"
+          },
+          "allergens": [
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 1,
+          "online": true
+        },
+        {
+          "id": "tp3",
+          "name": "Cappuccino",
+          "price": 3.1,
+          "weight": {
+            "value": 8,
+            "unit": "g",
+            "text": "8g"
+          },
+          "allergens": [
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 2,
+          "online": true
+        },
+        {
+          "id": "tp4",
+          "name": "Espresso doppio",
+          "price": 4.6,
+          "weight": {
+            "value": 8,
+            "unit": "g",
+            "text": "8g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 3,
+          "online": true
+        },
+        {
+          "id": "tp5",
+          "name": "Bezkofeínová káva",
+          "price": 2.8,
+          "weight": {
+            "value": 8,
+            "unit": "g",
+            "text": "8g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 4,
+          "online": true
+        },
+        {
+          "id": "tp6",
+          "name": "Čaj Teekanne",
+          "price": 2.5,
+          "weight": {
+            "value": 1.5,
+            "unit": "g",
+            "text": "1,5g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 5,
+          "online": true
+        },
+        {
+          "id": "tp7",
+          "name": "Čerstvý čaj zázvor, mäta",
+          "price": 3.2,
+          "weight": {
+            "value": 20,
+            "unit": "g",
+            "text": "20g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 6,
+          "online": true
+        },
+        {
+          "id": "tp8",
+          "name": "Horúca čokoláda",
+          "price": 3.2,
+          "weight": {
+            "value": 25,
+            "unit": "g",
+            "text": "25g"
+          },
+          "allergens": [
+            7
+          ],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 7,
+          "online": true
+        },
+        {
+          "id": "tp9",
+          "name": "Citrón",
+          "price": 0.5,
+          "weight": {
+            "value": 25,
+            "unit": "g",
+            "text": "25g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 8,
+          "online": true
+        },
+        {
+          "id": "tp10",
+          "name": "Med",
+          "price": 0.5,
+          "weight": {
+            "value": 20,
+            "unit": "g",
+            "text": "20g"
+          },
+          "allergens": [],
+          "additives": "",
+          "desc": "",
+          "no": null,
+          "sort": 9,
+          "online": true
+        }
+      ]
+    }
+  ],
+  "toppings": [
+    {
+      "g": "30g",
+      "price": 1,
+      "alg": "",
+      "items": [
+        "cibuľa",
+        "feferóny"
+      ]
+    },
+    {
+      "g": "50g",
+      "price": 1.2,
+      "alg": "mlieko",
+      "items": [
+        "šunka",
+        "šampiňóny",
+        "saláma",
+        "slanina",
+        "olivy",
+        "syr",
+        "kukurica",
+        "vajce",
+        "paprika",
+        "brokolica",
+        "ananás",
+        "paradajka"
+      ]
+    },
+    {
+      "g": "50g",
+      "price": 1.5,
+      "alg": "mlieko",
+      "items": [
+        "klobása",
+        "syr niva",
+        "syr parmezán"
+      ]
+    },
+    {
+      "g": "50g",
+      "price": 1.9,
+      "alg": "mlieko",
+      "items": [
+        "kuracie mäso",
+        "bryndza",
+        "prosciutto"
+      ]
+    }
+  ],
+  "glutenFree": {
+    "name": "Bezlepkové cesto",
+    "price": 2
+  },
+  "deliveryZones": [
+    {
+      "fee": 0.5,
+      "min": 7,
+      "villages": [
+        "Bešeňová",
+        "Ivachnová",
+        "Liptovská Teplá",
+        "Liptovský Michal",
+        "Madočany"
+      ]
+    },
+    {
+      "fee": 1,
+      "min": 15,
+      "villages": [
+        "Kalameny",
+        "Lúčky",
+        "Potok",
+        "Turík"
+      ]
+    },
+    {
+      "fee": 1.5,
+      "min": 15,
+      "villages": [
+        "Krmeš",
+        "Lisková",
+        "Liptovské Vlachy",
+        "Partizánska Ľupča",
+        "Vlašky"
+      ]
+    },
+    {
+      "fee": 2,
+      "min": 15,
+      "villages": [
+        "Bobrovník",
+        "Bukovina",
+        "Hliník",
+        "Liptovská Anna",
+        "Nižné Malatíny",
+        "Vyšné Malatíny"
+      ]
+    },
+    {
+      "fee": 2.5,
+      "min": 20,
+      "villages": [
+        "Liptovské Sliače"
+      ]
+    },
+    {
+      "fee": 3,
+      "min": 20,
+      "villages": [
+        "Dúbrava",
+        "Ižipovce",
+        "Liptovské Kľačany",
+        "Prosiek",
+        "Ľubeľa"
+      ]
+    },
+    {
+      "fee": 3.5,
+      "min": 25,
+      "villages": [
+        "Gôtovany",
+        "Liptovská Sielnica"
+      ]
+    }
+  ]
+}

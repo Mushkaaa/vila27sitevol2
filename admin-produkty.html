@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Správa ponuky · Vila 27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#14110F; --ink-2:#232020; --rule:#332F2D;
+    --paper:#F5F4F0; --paper-2:#E6E3DC; --line:#D6D1C8;
+    --muted:#8C8681; --grey:#6F6862; --accent:#BA2727; --tap:44px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Source Sans 3","Source Sans Pro",system-ui,sans-serif;
+    background:var(--paper); color:var(--ink); min-height:100vh; line-height:1.45;
+  }
+  button{font-family:inherit;cursor:pointer;border:1.5px solid transparent;border-radius:3px}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  h2{font-weight:900;letter-spacing:-.01em}
+
+  /* ---------- lišta ---------- */
+  .bar{
+    position:sticky;top:0;z-index:30;background:var(--ink);color:var(--paper);
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 20px;
+  }
+  .bar .logo{height:24px;width:auto;fill:var(--paper);flex:none}
+  .bar h1{font-size:.78rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .spacer{flex:1}
+  .tabs{display:flex;gap:2px}
+  .tabs button{
+    background:transparent;color:var(--muted);border-color:var(--rule);
+    padding:.45rem 1rem;font-size:.85rem;font-weight:700;min-height:38px;
+  }
+  .tabs button:hover{background:var(--ink-2)}
+  .tabs button.on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+  .bar .tool{
+    background:transparent;color:var(--paper);border-color:var(--rule);
+    padding:.45rem .9rem;font-size:.82rem;font-weight:600;min-height:38px;
+  }
+  .bar .tool:hover{background:var(--ink-2)}
+  .cas{font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* ---------- prihlásenie ---------- */
+  .gate{max-width:390px;margin:12vh auto;padding:0 20px}
+  .gate svg{height:34px;width:auto;fill:var(--ink);display:block;margin-bottom:26px}
+  .gate h2{font-size:1.5rem;margin-bottom:6px}
+  .gate p{color:var(--grey);font-size:.92rem;margin-bottom:20px}
+  .gate .field{margin-bottom:10px}
+  .gate button{
+    width:100%;margin-top:6px;padding:.85rem;background:var(--ink);color:var(--paper);
+    border-color:var(--ink);font-size:.95rem;font-weight:700;
+  }
+  .err{color:var(--accent);font-size:.88rem;margin-top:12px;min-height:1.2em;font-weight:600}
+  .vystraha{
+    margin-top:14px;padding:10px 12px;background:#F6E9E6;border-left:4px solid var(--accent);
+    font-size:.88rem;border-radius:2px;
+  }
+
+  /* ---------- formulárové prvky ---------- */
+  .field label{display:block;font-size:.8rem;font-weight:700;margin-bottom:4px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:.6rem .7rem;border:1.5px solid var(--line);border-radius:3px;
+    background:#fff;color:var(--ink);font:inherit;
+  }
+  .field textarea{resize:vertical;min-height:70px}
+  .field .hint{font-size:.76rem;color:var(--grey);margin-top:3px}
+
+  /* ---------- obsah ---------- */
+  .obal{max-width:1000px;margin:0 auto;padding:20px 20px 90px}
+  .hlava{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .hlava h2{font-size:1.6rem}
+  .hlava p{color:var(--grey);font-size:.92rem;flex-basis:100%}
+  .hlava .btn-pridaj{
+    margin-left:auto;background:var(--ink);color:var(--paper);border-color:var(--ink);
+    padding:.6rem 1.1rem;font-weight:700;min-height:var(--tap);
+  }
+  .btn-druhy{
+    background:transparent;color:var(--ink);border-color:var(--line);
+    padding:.6rem 1.1rem;font-weight:700;min-height:var(--tap);
+  }
+  .btn-druhy:hover{background:var(--paper-2)}
+
+  .kat{margin-top:26px;border-top:2px solid var(--ink);padding-top:10px}
+  .kat-hlava{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .kat-hlava h3{font-size:1.12rem;font-weight:900}
+  .kat-hlava .pocet{font-size:.76rem;color:var(--grey);font-weight:700}
+  .kat-hlava .konce{margin-left:auto;display:flex;gap:6px}
+  .kat-hlava .konce button{
+    background:transparent;border-color:var(--line);color:var(--grey);
+    padding:.35rem .7rem;font-size:.8rem;font-weight:600;
+  }
+  .kat-hlava .konce button:hover{background:var(--paper-2);color:var(--ink)}
+
+  .riadok{
+    display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .riadok.vypnuty{opacity:.45}
+  .riadok.vypnuty .r-nazov{text-decoration:line-through;text-decoration-thickness:1px}
+  .r-text{flex:1;min-width:0}
+  .r-nazov{font-weight:700;font-size:1rem}
+  .r-pod{font-size:.8rem;color:var(--grey);font-family:"JetBrains Mono",monospace;margin-top:1px}
+  .r-cena{font-weight:900;font-size:1.05rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .r-akcie{display:flex;gap:6px;flex:none}
+  .r-akcie button{
+    background:transparent;border-color:var(--line);color:var(--grey);
+    padding:.4rem .7rem;font-size:.8rem;font-weight:600;min-height:36px;
+  }
+  .r-akcie button:hover{background:var(--paper-2);color:var(--ink)}
+  .r-akcie .zmaz:hover{background:#F6E9E6;border-color:var(--accent);color:var(--accent)}
+
+  /* prepínač – vypnuté musí byť vidieť bez čítania */
+  .prep{
+    flex:none;width:58px;height:30px;border-radius:15px;border:1.5px solid var(--line);
+    background:var(--paper-2);position:relative;transition:background .12s,border-color .12s;
+  }
+  .prep::after{
+    content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);transition:transform .12s;
+  }
+  .prep[aria-pressed="true"]{background:var(--ink);border-color:var(--ink)}
+  .prep[aria-pressed="true"]::after{transform:translateX(28px);border-color:var(--ink)}
+  .prep-popis{flex:none;width:56px;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
+
+  /* ---------- okná ---------- */
+  .zaclona{
+    position:fixed;inset:0;z-index:50;background:rgba(20,17,15,.6);
+    display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto;
+  }
+  .zaclona.show{display:flex}
+  .okno{background:var(--paper);border-radius:4px;width:100%;max-width:640px;margin:auto}
+  .okno-hlava{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:2px solid var(--ink)}
+  .okno-hlava h3{font-size:1.2rem;font-weight:900;flex:1}
+  .okno-zavri{background:transparent;border:none;font-size:1.6rem;line-height:1;color:var(--grey);padding:0 6px;cursor:pointer}
+  .okno-telo{padding:18px 20px}
+  .okno-pata{display:flex;gap:10px;padding:0 20px 20px}
+  .okno-pata button{flex:1;min-height:var(--tap);font-weight:700}
+  .ulozit{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .zrusit{background:transparent;color:var(--ink);border-color:var(--line)}
+  .dvojica{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  .trojica{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+
+  .alerg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 10px;margin-top:2px}
+  .alerg label{display:flex;align-items:center;gap:7px;font-size:.87rem;padding:3px 0;cursor:pointer}
+  .alerg input{width:17px;height:17px;flex:none;accent-color:var(--ink)}
+
+  .okno-chyba{color:var(--accent);font-weight:600;font-size:.9rem;margin-top:10px;min-height:1.2em}
+
+  .zaloha-riadok{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+  .zaloha-riadok .kedy{font-family:"JetBrains Mono",monospace;font-size:.82rem;color:var(--grey);flex:none}
+  .zaloha-riadok .co{flex:1}
+  .zaloha-riadok button{background:transparent;border-color:var(--line);padding:.35rem .8rem;font-size:.8rem;font-weight:700}
+  .zaloha-riadok button:hover{background:var(--paper-2)}
+
+  .oznam{
+    position:fixed;left:50%;bottom:24px;transform:translate(-50%,14px);z-index:70;
+    background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:3px;
+    font-size:.92rem;opacity:0;visibility:hidden;transition:opacity .18s,transform .18s,visibility 0s .18s;
+    max-width:calc(100% - 40px);
+  }
+  .oznam.show{opacity:1;transform:translate(-50%,0);visibility:visible;transition:opacity .18s,transform .18s}
+
+  @media (max-width:700px){
+    .bar{padding:10px 14px;gap:10px}
+    .bar h1,.cas{display:none}
+    .tabs{order:3;flex-basis:100%}
+    .tabs button{flex:1}
+    .obal{padding:16px 14px 80px}
+    .riadok{flex-wrap:wrap}
+    .r-text{flex-basis:100%;order:1}
+    .prep-popis{order:2}
+    .prep{order:3}
+    .r-cena{order:4;margin-left:auto}
+    .r-akcie{order:5;flex-basis:100%;margin-top:6px}
+    .r-akcie button{flex:1}
+    .dvojica,.trojica{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- ---------- prihlásenie ---------- -->
+<div id="gate" class="gate" hidden>
+  <svg viewBox="10 5 160 100" aria-label="Vila 27"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg>
+  <h2>Správa ponuky</h2>
+  <p>Prihláste sa menom a heslom. Z bezpečnostných dôvodov sa po obnovení stránky treba prihlásiť znova.</p>
+  <div class="field"><label for="g-meno">Meno</label><input id="g-meno" autocomplete="username" /></div>
+  <div class="field"><label for="g-heslo">Heslo</label><input id="g-heslo" type="password" autocomplete="current-password" /></div>
+  <button id="prihlas">Prihlásiť sa</button>
+  <div class="err" id="gateErr"></div>
+  <div class="vystraha" id="gateDraft" hidden></div>
+</div>
+
+<!-- ---------- editor ---------- -->
+<div id="app" hidden>
+  <div class="bar">
+    <svg class="logo" viewBox="10 5 160 100" aria-label="Vila 27"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg>
+    <h1>Správa ponuky</h1>
+    <div class="tabs" role="group" aria-label="Ktorú ponuku upravujem">
+      <button type="button" class="on" data-zoznam="rozvoz">Rozvoz</button>
+      <button type="button" data-zoznam="jedalnylistok">Jedálny lístok</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="cas" id="odpocet"></span>
+    <button type="button" class="tool" id="zalohyBtn">Zálohy</button>
+    <button type="button" class="tool" id="odhlas">Odhlásiť sa</button>
+  </div>
+
+  <div class="obal">
+    <div class="hlava">
+      <h2 id="nadpis">Rozvoz</h2>
+      <button type="button" class="btn-pridaj" id="novyBtn">Pridať produkt</button>
+      <p id="podnadpis"></p>
+    </div>
+    <button type="button" class="btn-druhy" id="novaKatBtn">Pridať kategóriu</button>
+    <div id="vypis"></div>
+  </div>
+</div>
+
+<!-- ---------- okno produktu ---------- -->
+<div class="zaclona" id="oknoProdukt" role="dialog" aria-modal="true" aria-labelledby="pTitul">
+  <div class="okno">
+    <div class="okno-hlava">
+      <h3 id="pTitul">Nový produkt</h3>
+      <button type="button" class="okno-zavri" id="pZavri" aria-label="Zavrieť">×</button>
+    </div>
+    <div class="okno-telo">
+      <div class="field"><label for="p-nazov">Názov</label><input id="p-nazov" maxlength="120" /></div>
+      <div class="trojica">
+        <div class="field"><label for="p-cena">Cena v eurách</label><input id="p-cena" inputmode="decimal" placeholder="napr. 9,90" /></div>
+        <div class="field"><label for="p-kat">Kategória</label><select id="p-kat"></select></div>
+      </div>
+      <div class="dvojica">
+        <div class="field"><label for="p-vaha">Gramáž</label><input id="p-vaha" inputmode="decimal" placeholder="napr. 350" /></div>
+        <div class="field"><label for="p-jednotka">Jednotka</label>
+          <select id="p-jednotka">
+            <option value="g">g – gramy</option>
+            <option value="ml">ml – mililitre</option>
+            <option value="ks">ks – kusy</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label for="p-popis">Krátky popis (nepovinné)</label><textarea id="p-popis" maxlength="400" placeholder="Suroviny, spôsob prípravy…"></textarea></div>
+      <div class="field">
+        <label>Alergény</label>
+        <div class="alerg" id="p-alerg"></div>
+      </div>
+      <div class="field"><label for="p-poradie">Poradie v kategórii (nepovinné)</label><input id="p-poradie" inputmode="numeric" placeholder="0" />
+        <div class="hint">Nižšie číslo je vyššie v zozname.</div>
+      </div>
+      <div class="okno-chyba" id="pChyba"></div>
+    </div>
+    <div class="okno-pata">
+      <button type="button" class="zrusit" id="pZrus">Zrušiť</button>
+      <button type="button" class="ulozit" id="pUloz">Uložiť</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- okno kategórie ---------- -->
+<div class="zaclona" id="oknoKat" role="dialog" aria-modal="true" aria-labelledby="kTitul">
+  <div class="okno" style="max-width:460px">
+    <div class="okno-hlava">
+      <h3 id="kTitul">Nová kategória</h3>
+      <button type="button" class="okno-zavri" id="kZavri" aria-label="Zavrieť">×</button>
+    </div>
+    <div class="okno-telo">
+      <div class="field"><label for="k-nazov">Názov kategórie</label><input id="k-nazov" maxlength="60" placeholder="napr. Dezerty" /></div>
+      <div class="field"><label for="k-druh">Patrí medzi</label>
+        <select id="k-druh"><option value="food">Jedlá</option><option value="drink">Nápoje</option></select>
+      </div>
+      <div class="okno-chyba" id="kChyba"></div>
+    </div>
+    <div class="okno-pata">
+      <button type="button" class="zrusit" id="kZrus">Zrušiť</button>
+      <button type="button" class="ulozit" id="kUloz">Pridať</button>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- okno záloh ---------- -->
+<div class="zaclona" id="oknoZalohy" role="dialog" aria-modal="true" aria-labelledby="zTitul">
+  <div class="okno">
+    <div class="okno-hlava">
+      <h3 id="zTitul">Zálohy</h3>
+      <button type="button" class="okno-zavri" id="zZavri" aria-label="Zavrieť">×</button>
+    </div>
+    <div class="okno-telo">
+      <p style="color:var(--grey);font-size:.9rem;margin-bottom:12px">
+        Pri každej zmene sa odloží predchádzajúca podoba ponuky. Vrátením zálohy sa
+        obnoví stav spred danej úpravy – aktuálna podoba sa pritom tiež odloží.
+      </p>
+      <div id="zVypis"></div>
+    </div>
+  </div>
+</div>
+
+<div class="oznam" id="oznam" role="status" aria-live="polite"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const DRAFT = "vila27_rozpracovany";      // len sessionStorage, nikdy localStorage
+
+let zoznam = "rozvoz";
+let kategorie = [];
+let ALERGENY = {};
+let upravovany = null;        // id produktu, ktorý je práve v okne (null = nový)
+let spinavy = false;          // v okne sú nezapísané zmeny
+let koniec = 0, tikot = null;
+
+const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+const eur = n => (Number(n) || 0).toFixed(2).replace(".", ",") + " €";
+const NAZOV = { rozvoz: "Rozvoz", jedalnylistok: "Jedálny lístok" };
+const POPIS = {
+  rozvoz: "Toto vidia zákazníci v objednávkovom formulári. Vypnutý produkt sa nedá objednať.",
+  jedalnylistok: "Toto je jedálny a nápojový lístok na stránke. Vypnutý produkt sa na ňom nezobrazí.",
+};
+
+let oznamT;
+function oznam(text){
+  const t = $("#oznam");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(oznamT);
+  oznamT = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+/* ---------- komunikácia so serverom ---------- */
+async function api(cesta, telo){
+  const res = await fetch(cesta, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(telo),
+  });
+  if (res.status === 401){ vypadloPrihlasenie(); throw new Error("401"); }
+  posunOdpocet();            // server sedenie predĺžil aj pri odmietnutom vstupe
+  const data = await res.json().catch(() => ({ ok: false, error: "Server neodpovedal zrozumiteľne." }));
+  if (!data.ok) throw new Error(data.error || "Nepodarilo sa to uložiť.");
+  return data;
+}
+
+/* Prihlásenie vypršalo. Rozrobený produkt nezahadzujeme – odložíme ho a
+   po opätovnom prihlásení ho ponúkneme späť. */
+function vypadloPrihlasenie(){
+  if (spinavy){
+    try{ sessionStorage.setItem(DRAFT, JSON.stringify({ zoznam, produkt: zberFormular(), id: upravovany })); }catch(e){}
+  }
+  naGate("Prihlásenie vypršalo. Prihláste sa znova.");
+}
+
+function naGate(chyba){
+  clearInterval(tikot); tikot = null;
+  kategorie = []; upravovany = null; spinavy = false;
+  zavriVsetky();
+  $("#app").hidden = true;
+  $("#gate").hidden = false;
+  $("#gateErr").textContent = chyba || "";
+  const draft = sessionStorage.getItem(DRAFT);
+  $("#gateDraft").hidden = !draft;
+  if (draft) $("#gateDraft").textContent = "Rozpracovaný produkt sme neodhodili – po prihlásení ho nájdete otvorený tak, ako ste ho nechali.";
+  $("#g-heslo").value = "";
+  $("#g-meno").focus();
+}
+
+const pocetSlovom = n => n === 1 ? "produkt" : (n >= 2 && n <= 4) ? "produkty" : "produktov";
+
+/* ---------- odpočet do konca prihlásenia ---------- */
+let minutSedenia = 20;
+function posunOdpocet(){ koniec = Date.now() + minutSedenia * 60000; }
+function tik(){
+  const zostava = Math.max(0, Math.round((koniec - Date.now()) / 1000));
+  if (!zostava){ naGate("Prihlásenie vypršalo pre nečinnosť. Prihláste sa znova."); return; }
+  const m = Math.floor(zostava / 60), s = zostava % 60;
+  $("#odpocet").textContent = `odhlásenie o ${m}:${String(s).padStart(2, "0")}`;
+}
+
+/* ---------- vykreslenie zoznamu ---------- */
+function riadok(p){
+  const w = p.weight && p.weight.text ? p.weight.text : "";
+  const alg = (p.allergens || []).length ? "alergény " + p.allergens.join(", ") : "bez alergénov";
+  const zapnuty = p.online !== false;
+  return `<div class="riadok ${zapnuty ? "" : "vypnuty"}">
+    <div class="r-text">
+      <div class="r-nazov">${esc(p.name)}</div>
+      <div class="r-pod">${esc(w || "—")} · ${esc(alg)}</div>
+    </div>
+    <span class="prep-popis">${zapnuty ? "v ponuke" : "vypnuté"}</span>
+    <button type="button" class="prep" role="switch" aria-pressed="${zapnuty}"
+            aria-label="${zapnuty ? "Vypnúť" : "Zapnúť"} ${esc(p.name)}" data-prep="${esc(p.id)}"></button>
+    <span class="r-cena">${eur(p.price)}</span>
+    <span class="r-akcie">
+      <button type="button" data-uprav="${esc(p.id)}">Upraviť</button>
+      <button type="button" class="zmaz" data-zmaz="${esc(p.id)}">Zmazať</button>
+    </span>
+  </div>`;
+}
+
+function vykresli(){
+  $("#nadpis").textContent = NAZOV[zoznam];
+  $("#podnadpis").textContent = POPIS[zoznam];
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.zoznam === zoznam));
+
+  $("#vypis").innerHTML = kategorie.map(c => `
+    <section class="kat">
+      <div class="kat-hlava">
+        <h3>${esc(c.cat)}</h3>
+        <span class="pocet">${c.items.length} ${pocetSlovom(c.items.length)}</span>
+        <span class="konce">
+          <button type="button" data-do-kat="${esc(c.id)}">Pridať sem produkt</button>
+          ${c.items.length ? "" : `<button type="button" data-zmaz-kat="${esc(c.id)}">Zmazať kategóriu</button>`}
+        </span>
+      </div>
+      ${c.items.length ? c.items.map(riadok).join("") : '<p style="color:var(--grey);font-size:.9rem;padding:8px 0">Zatiaľ tu nič nie je.</p>'}
+    </section>`).join("");
+}
+
+async function nacitaj(){
+  const data = await api("/api/admin-menu", { akcia: "nacitaj", zoznam });
+  kategorie = data.kategorie;
+  ALERGENY = data.alergeny || ALERGENY;
+  vykresli();
+}
+
+/* ---------- okno produktu ---------- */
+function zavriVsetky(){
+  document.querySelectorAll(".zaclona").forEach(z => z.classList.remove("show"));
+}
+
+function poliaAlergenov(vybrane){
+  $("#p-alerg").innerHTML = Object.keys(ALERGENY).map(n => `
+    <label><input type="checkbox" value="${n}" ${vybrane.includes(Number(n)) ? "checked" : ""} />
+    <span>${n} ${esc(ALERGENY[n])}</span></label>`).join("");
+}
+
+function otvorProdukt(produkt, catId){
+  upravovany = produkt ? produkt.id : null;
+  $("#pTitul").textContent = produkt ? "Upraviť produkt" : "Nový produkt";
+  $("#pChyba").textContent = "";
+  $("#p-nazov").value = produkt ? produkt.name : "";
+  $("#p-cena").value = produkt ? String(produkt.price).replace(".", ",") : "";
+  $("#p-vaha").value = produkt && produkt.weight && produkt.weight.value != null ? String(produkt.weight.value).replace(".", ",") : "";
+  $("#p-jednotka").value = produkt && produkt.weight && produkt.weight.unit ? produkt.weight.unit : "g";
+  $("#p-popis").value = produkt ? (produkt.desc || "") : "";
+  $("#p-poradie").value = produkt && produkt.sort != null ? produkt.sort : "";
+  poliaAlergenov(produkt ? (produkt.allergens || []) : []);
+
+  const vKategorii = catId || (produkt ? (kategorie.find(c => c.items.some(i => i.id === produkt.id)) || {}).id : kategorie[0] && kategorie[0].id);
+  $("#p-kat").innerHTML = kategorie.map(c => `<option value="${esc(c.id)}" ${c.id === vKategorii ? "selected" : ""}>${esc(c.cat)}</option>`).join("");
+
+  spinavy = false;
+  $("#oknoProdukt").classList.add("show");
+  $("#p-nazov").focus();
+}
+
+function zberFormular(){
+  return {
+    id: upravovany || "",
+    name: $("#p-nazov").value,
+    price: $("#p-cena").value,
+    weight: { value: $("#p-vaha").value, unit: $("#p-jednotka").value },
+    desc: $("#p-popis").value,
+    sort: $("#p-poradie").value,
+    allergens: Array.from($("#p-alerg").querySelectorAll("input:checked")).map(i => Number(i.value)),
+    kategoria: $("#p-kat").value,
+  };
+}
+
+async function ulozProdukt(){
+  const data = zberFormular();
+  const kategoria = data.kategoria;
+  delete data.kategoria;
+  if (!data.id) delete data.id;
+
+  $("#pChyba").textContent = "";
+  try{
+    const odpoved = await api("/api/admin-menu", { akcia: "uloz", zoznam, kategoria, produkt: data });
+    kategorie = odpoved.kategorie;
+    spinavy = false;
+    sessionStorage.removeItem(DRAFT);
+    zavriVsetky();
+    vykresli();
+    oznam(upravovany ? "Produkt upravený." : "Produkt pridaný.");
+  }catch(e){
+    if (e.message !== "401") $("#pChyba").textContent = e.message;
+  }
+}
+
+/* ---------- akcie v zozname ---------- */
+async function prepni(id, zapnut){
+  try{
+    await api("/api/admin-menu", { akcia: "prepni", zoznam, id, online: zapnut });
+    kategorie.forEach(c => c.items.forEach(i => { if (i.id === id) i.online = zapnut; }));
+    vykresli();
+    oznam(zapnut ? "Produkt je v ponuke." : "Produkt je vypnutý, zákazníci ho nevidia.");
+  }catch(e){ if (e.message !== "401") oznam(e.message); }
+}
+
+async function zmaz(id){
+  const p = kategorie.flatMap(c => c.items).find(i => i.id === id);
+  if (!p || !confirm(`Naozaj zmazať „${p.name}“?\n\nZmena sa dá vrátiť cez Zálohy.`)) return;
+  try{
+    const odpoved = await api("/api/admin-menu", { akcia: "zmaz", zoznam, id });
+    kategorie = odpoved.kategorie;
+    vykresli();
+    oznam("Produkt zmazaný. Vrátiť sa dá cez Zálohy.");
+  }catch(e){ if (e.message !== "401") oznam(e.message); }
+}
+
+async function zmazKategoriu(id){
+  const c = kategorie.find(x => x.id === id);
+  if (!c || !confirm(`Naozaj zmazať kategóriu „${c.cat}“?`)) return;
+  try{
+    const odpoved = await api("/api/admin-menu", { akcia: "zmazKategoriu", zoznam, id });
+    kategorie = odpoved.kategorie;
+    vykresli();
+    oznam("Kategória zmazaná.");
+  }catch(e){ if (e.message !== "401") oznam(e.message); }
+}
+
+/* ---------- zálohy ---------- */
+async function otvorZalohy(){
+  try{
+    const data = await api("/api/admin-menu", { akcia: "zalohy" });
+    const z = data.zalohy || [];
+    $("#zVypis").innerHTML = z.length ? z.map(x => {
+      const d = new Date(x.kedy);
+      const p = n => String(n).padStart(2, "0");
+      return `<div class="zaloha-riadok">
+        <span class="kedy">${p(d.getDate())}.${p(d.getMonth() + 1)}. ${p(d.getHours())}:${p(d.getMinutes())}</span>
+        <span class="co">${esc(NAZOV[x.zoznam] || x.zoznam)} — ${esc(x.popis)} <span style="color:var(--grey)">(${x.poloziek} položiek)</span></span>
+        <button type="button" data-obnov="${esc(x.id)}">Vrátiť</button>
+      </div>`;
+    }).join("") : '<p style="color:var(--grey)">Zatiaľ žiadne zálohy – vytvoria sa pri prvej zmene.</p>';
+    $("#oknoZalohy").classList.add("show");
+  }catch(e){ if (e.message !== "401") oznam(e.message); }
+}
+
+async function obnovZalohu(id){
+  if (!confirm("Vrátiť ponuku do podoby spred tejto úpravy?")) return;
+  try{
+    const data = await api("/api/admin-menu", { akcia: "obnov", id });
+    zoznam = data.zoznam;
+    kategorie = data.kategorie;
+    zavriVsetky();
+    vykresli();
+    oznam("Ponuka je vrátená späť.");
+  }catch(e){ if (e.message !== "401") oznam(e.message); }
+}
+
+/* ---------- prihlásenie ---------- */
+async function prihlas(){
+  const meno = $("#g-meno").value.trim();
+  const heslo = $("#g-heslo").value;
+  if (!meno || !heslo){ $("#gateErr").textContent = "Vyplňte meno aj heslo."; return; }
+  $("#gateErr").textContent = "";
+  try{
+    const res = await fetch("/api/admin-auth", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ akcia: "prihlas", meno, heslo }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok){ $("#gateErr").textContent = data.error || "Prihlásenie sa nepodarilo."; return; }
+
+    $("#g-heslo").value = "";
+    $("#gate").hidden = true;
+    $("#app").hidden = false;
+    minutSedenia = data.minut || 20;
+    posunOdpocet();
+    clearInterval(tikot); tikot = setInterval(tik, 1000); tik();
+    await nacitaj();
+    obnovRozpracovane();
+  }catch(e){
+    $("#gateErr").textContent = "Server neodpovedá. Skúste to znova.";
+  }
+}
+
+/* Po opätovnom prihlásení vrátime rozrobený produkt tam, kde bol. */
+function obnovRozpracovane(){
+  const raw = sessionStorage.getItem(DRAFT);
+  if (!raw) return;
+  sessionStorage.removeItem(DRAFT);
+  let d; try{ d = JSON.parse(raw); }catch{ return; }
+  if (d.zoznam !== zoznam) return;
+  const existujuci = d.id ? kategorie.flatMap(c => c.items).find(i => i.id === d.id) : null;
+  otvorProdukt(existujuci, d.produkt.kategoria);
+  $("#p-nazov").value = d.produkt.name || "";
+  $("#p-cena").value = d.produkt.price || "";
+  $("#p-vaha").value = (d.produkt.weight && d.produkt.weight.value) || "";
+  $("#p-jednotka").value = (d.produkt.weight && d.produkt.weight.unit) || "g";
+  $("#p-popis").value = d.produkt.desc || "";
+  $("#p-poradie").value = d.produkt.sort || "";
+  poliaAlergenov(d.produkt.allergens || []);
+  spinavy = true;
+  oznam("Rozpracovaný produkt je späť.");
+}
+
+async function odhlas(){
+  if (spinavy && !confirm("V okne máte neuložené zmeny. Odhlásiť sa a zahodiť ich?")) return;
+  sessionStorage.removeItem(DRAFT);
+  spinavy = false;
+  try{ await fetch("/api/admin-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ akcia: "odhlas" }) }); }catch(e){}
+  naGate("");
+}
+
+/* ---------- napojenie ovládania ---------- */
+$("#prihlas").addEventListener("click", prihlas);
+$("#g-heslo").addEventListener("keydown", e => { if (e.key === "Enter") prihlas(); });
+$("#g-meno").addEventListener("keydown", e => { if (e.key === "Enter") $("#g-heslo").focus(); });
+$("#odhlas").addEventListener("click", odhlas);
+$("#zalohyBtn").addEventListener("click", otvorZalohy);
+
+document.querySelector(".tabs").addEventListener("click", async e => {
+  const b = e.target.closest("[data-zoznam]");
+  if (!b || b.dataset.zoznam === zoznam) return;
+  if (spinavy && !confirm("V okne máte neuložené zmeny. Prepnúť a zahodiť ich?")) return;
+  spinavy = false; zavriVsetky();
+  zoznam = b.dataset.zoznam;
+  try{ await nacitaj(); }catch(e){}
+});
+
+$("#novyBtn").addEventListener("click", () => {
+  if (!kategorie.length){ oznam("Najprv pridajte kategóriu."); return; }
+  otvorProdukt(null, null);
+});
+$("#novaKatBtn").addEventListener("click", () => {
+  $("#k-nazov").value = ""; $("#kChyba").textContent = "";
+  $("#oknoKat").classList.add("show");
+  $("#k-nazov").focus();
+});
+
+$("#vypis").addEventListener("click", e => {
+  const prep = e.target.closest("[data-prep]");
+  if (prep){ prepni(prep.dataset.prep, prep.getAttribute("aria-pressed") !== "true"); return; }
+  const uprav = e.target.closest("[data-uprav]");
+  if (uprav){
+    const p = kategorie.flatMap(c => c.items).find(i => i.id === uprav.dataset.uprav);
+    if (p) otvorProdukt(p, null);
+    return;
+  }
+  const zmazBtn = e.target.closest("[data-zmaz]");
+  if (zmazBtn){ zmaz(zmazBtn.dataset.zmaz); return; }
+  const doKat = e.target.closest("[data-do-kat]");
+  if (doKat){ otvorProdukt(null, doKat.dataset.doKat); return; }
+  const zmazKat = e.target.closest("[data-zmaz-kat]");
+  if (zmazKat){ zmazKategoriu(zmazKat.dataset.zmazKat); }
+});
+
+$("#zVypis").addEventListener("click", e => {
+  const b = e.target.closest("[data-obnov]");
+  if (b) obnovZalohu(b.dataset.obnov);
+});
+
+$("#pUloz").addEventListener("click", ulozProdukt);
+$("#kUloz").addEventListener("click", async () => {
+  const nazov = $("#k-nazov").value.trim();
+  $("#kChyba").textContent = "";
+  try{
+    const data = await api("/api/admin-menu", { akcia: "kategoria", zoznam, nazov, kind: $("#k-druh").value });
+    kategorie = data.kategorie;
+    zavriVsetky();
+    vykresli();
+    oznam("Kategória pridaná.");
+  }catch(e){ if (e.message !== "401") $("#kChyba").textContent = e.message; }
+});
+
+function zavriProdukt(){
+  if (spinavy && !confirm("Zahodiť neuložené zmeny?")) return;
+  spinavy = false;
+  zavriVsetky();
+}
+$("#pZavri").addEventListener("click", zavriProdukt);
+$("#pZrus").addEventListener("click", zavriProdukt);
+$("#kZavri").addEventListener("click", zavriVsetky);
+$("#kZrus").addEventListener("click", zavriVsetky);
+$("#zZavri").addEventListener("click", zavriVsetky);
+
+$("#oknoProdukt").addEventListener("input", () => { spinavy = true; });
+$("#oknoProdukt").addEventListener("change", () => { spinavy = true; });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if ($("#oknoProdukt").classList.contains("show")) zavriProdukt();
+  else zavriVsetky();
+});
+
+/* Obnovenie stránky odhlasuje – nech to nepríde ako prekvapenie s rozrobeným produktom. */
+addEventListener("beforeunload", e => {
+  if (!spinavy) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
+
+/* Štart: server zruší akékoľvek staré sedenie, takže sa vždy začína prihlásením. */
+(async () => {
+  try{
+    await fetch("/api/admin-auth", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ akcia: "start" }),
+    });
+  }catch(e){}
+  naGate("");
+})();
+</script>
+</body>
+</html>

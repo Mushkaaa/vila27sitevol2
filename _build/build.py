@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Generuje statické HTML stránky Vily 27 zo spoločnej hlavičky/pätičky.
-Spustenie:  python3 _build/build.py   (potrebuje Node kvôli menu-data.js)
+Spustenie:  python3 _build/build.py
 Voliteľné – stránky sa dajú upravovať aj priamo v HTML."""
 import json, subprocess, os, re
 
@@ -14,8 +14,10 @@ HOURS = "11:00 – 21:30"
 FB = "https://fb.me/vila27besenova"; IG = "https://www.instagram.com/vila27__besenova/"
 
 LOGO_SYMBOL = open(os.path.join(HERE, "logo-symbol.html"), encoding="utf-8").read()
-MENU = json.loads(subprocess.check_output(
-    ["node", "-e", 'process.stdout.write(JSON.stringify(require(process.argv[1]).MENU))', os.path.join(OUT, "menu-data.js")]))
+
+# Ponuku drží menu.json (záloha k Redisu). Stránky si ju ťahajú za behu z /api/menu,
+# build ju potrebuje len na pár vypichnutých jedál na domovskej stránke.
+MENU = json.load(open(os.path.join(OUT, "menu.json"), encoding="utf-8"))["jedalnylistok"]
 
 NAV = [("restauracia.html", "Reštaurácia"), ("jedalny-listok.html", "Jedálny lístok"),
        ("ubytovanie.html", "Ubytovanie"), ("volny-cas.html", "Voľný čas"), ("kontakt.html", "Kontakt")]
@@ -354,7 +356,7 @@ rest = head("Reštaurácia & bar — Vila 27, Bešeňová",
 write("restauracia.html", rest)
 
 # =====================================================================
-# JEDÁLNY LÍSTOK (vykresľuje sa z menu-data.js)
+# JEDÁLNY LÍSTOK (vykresľuje sa z /api/menu)
 # =====================================================================
 menu_page = head("Jedálny a nápojový lístok — Vila 27, Bešeňová",
                  "Jedálny a nápojový lístok reštaurácie Vila 27 v Bešeňovej: predjedlá, polievky, jedlá z Liptova, hlavné jedlá, burgery, pizza, dezerty, víno, pivo a miešané nápoje. Ceny a alergény.") + header() + f"""
@@ -372,15 +374,24 @@ menu_page = head("Jedálny a nápojový lístok — Vila 27, Bešeňová",
   </div>
 </div>
 </main>
-""" + footer(f"""<script src="menu-data.js"></script>
-<script>
+""" + footer(f"""<script>
 (function () {{
-  var M = window.VILA27_MENU, MENU = M.MENU;
   var eur = function (n) {{ return n.toFixed(2).replace(".", ",") + " €"; }};
   var esc = function (s) {{ return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) {{ return {{"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}}[c]; }}); }};
 
   var nav = document.getElementById("menuNavScroll");
   var root = document.getElementById("menu");
+
+  fetch("/api/menu")
+    .then(function (r) {{ if (!r.ok) throw new Error("server"); return r.json(); }})
+    .then(function (data) {{ if (!data.ok) throw new Error("server"); vykresli(data); }})
+    .catch(function () {{
+      root.innerHTML = '<p class="cat-note">Lístok sa nepodarilo načítať. Obnovte stránku alebo nám zavolajte na <a href="{PHONE_HREF}">{PHONE}</a>.</p>';
+    }});
+
+  function vykresli(data) {{
+  var MENU = data.jedalnylistok, M = {{ TOPPINGS: data.toppings }};
+  var ALERGENY = data.alergeny || {{}};
   var html = "", navHtml = "";
   ["food", "drink"].forEach(function (kind) {{
     var cats = MENU.filter(function (c) {{ return c.kind === kind; }});
@@ -392,12 +403,13 @@ menu_page = head("Jedálny a nápojový lístok — Vila 27, Bešeňová",
       html += '<section class="menu-cat" id="cat-' + c.id + '"><h2>' + esc(c.cat) + '</h2>';
       if (c.note) html += '<p class="cat-note">' + esc(c.note) + '</p>';
       c.items.forEach(function (it) {{
-        if (it.orderOnly) return;
         var name = (it.no ? it.no + ". " : "") + it.name;
-        html += '<div class="m-item">' + (it.w ? '<span class="m-w">' + esc(it.w) + '</span>' : "") + '<span class="m-name">' + esc(name) + '</span>' +
+        var w = it.weight && it.weight.text ? it.weight.text : "";
+        html += '<div class="m-item">' + (w ? '<span class="m-w">' + esc(w) + '</span>' : "") + '<span class="m-name">' + esc(name) + '</span>' +
                 '<span class="m-price">' + eur(it.price) + '</span>';
         if (it.desc) html += '<p class="m-desc">' + esc(it.desc) + '</p>';
-        if (it.alg) html += '<p class="m-alg">alergény: ' + esc(it.alg) + '</p>';
+        if (it.allergens && it.allergens.length) html += '<p class="m-alg">alergény: ' + it.allergens.join(", ") + '</p>';
+        if (it.additives) html += '<p class="m-alg">prídavné látky: ' + esc(it.additives) + '</p>';
         (it.menuAddons || []).forEach(function (a) {{ html += '<div class="m-add"><span>+ ' + esc(a.name) + '</span><span>' + eur(a.price) + '</span></div>'; }});
         html += '</div>';
       }});
@@ -413,7 +425,8 @@ menu_page = head("Jedálny a nápojový lístok — Vila 27, Bešeňová",
     }});
     html += '</section>';
   }});
-  html += '<p class="menu-foot">Zoznam alergénov: 1 lepok, 3 vajcia, 4 ryby, 7 mlieko, 9 zeler, 10 horčica, 11 sezam, 12 siričitany. Váhy sú uvedené v surovom stave. Zmeny v ponuke vyhradené.</p>';
+  var legenda = Object.keys(ALERGENY).map(function (n) {{ return n + " " + ALERGENY[n]; }}).join(", ");
+  html += '<p class="menu-foot">Zoznam alergénov: ' + esc(legenda) + '. Váhy sú uvedené v surovom stave. Zmeny v ponuke vyhradené.</p>';
   root.innerHTML = html;
   nav.innerHTML = navHtml;
 
@@ -430,6 +443,7 @@ menu_page = head("Jedálny a nápojový lístok — Vila 27, Bešeňová",
     }});
   }}, {{ rootMargin: "-30% 0px -60% 0px" }});
   root.querySelectorAll(".menu-cat").forEach(function (s) {{ io.observe(s); }});
+  }}
 }})();
 </script>
 """)
@@ -540,8 +554,7 @@ order_page = head("Objednať jedlo online — Vila 27, Bešeňová",
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-""" + footer("""<script src="menu-data.js"></script>
-<script src="objednavka.js"></script>
+""" + footer("""<script src="objednavka.js"></script>
 """)
 write("objednavka.html", order_page)
 

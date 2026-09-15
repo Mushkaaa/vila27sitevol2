@@ -1,61 +1,83 @@
-/* Vila 27 — objednávka online. Ponuka sa berie z menu-data.js (VILA27_MENU). */
+/* Vila 27 — objednávka online. Ponuku aj ceny berie zo servera (/api/menu);
+   na server sa posielajú len id jedál a doplnkov, ceny si prepočíta sám. */
 (function () {
   "use strict";
-  var M = window.VILA27_MENU;
   var ORDER_API = "/api/orders";
-  var ZONES = M.DELIVERY_ZONES;
-  var GLUTEN_FREE = M.GLUTEN_FREE;
-  var TOPPINGS = M.TOPPINGS;
+  var MENU_API = "/api/menu";
 
-  /* len kategórie a položky, ktoré sa dajú objednať */
-  var MENU = M.MENU.filter(function (c) { return c.order; }).map(function (c) {
-    return { id: c.id, cat: c.cat, note: c.orderNote || c.note || "", items: c.items.filter(function (i) { return i.order !== false; }) };
-  });
-  var PIZZA_IDS = new Set((MENU.find(function (g) { return g.id === "pizza"; }) || { items: [] }).items.map(function (i) { return i.id; }));
+  var MENU = [], TOPPINGS = [], GLUTEN_FREE = { name: "", price: 0 }, ZONES = [];
+  var PIZZA_IDS = new Set(), ALL = [];
 
   var eur = function (n) { return n.toFixed(2).replace(".", ",") + " €"; };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); };
   var $ = function (id) { return document.getElementById(id); };
   var displayName = function (it) { return (it.no ? it.no + ". " : "") + it.name; };
+  var vaha = function (it) { return it.weight && it.weight.text ? it.weight.text : ""; };
 
   var cart = [];          // [{key,id,name,base,extras:[{name,price}],gf,qty}]
   var mode = "rozvoz";
-  var village = "";       // vybraná obec doručenia
+  var village = "";
 
   var zoneFor = function (v) {
     return ZONES.find(function (z) { return z.villages.indexOf(v) !== -1; }) || null;
   };
+  var findItem = function (id) { return ALL.find(function (i) { return i.id === id; }); };
 
-  /* dropdown obcí – skupiny podľa ceny dopravy a minimálnej objednávky */
-  var villageSel = $("f-village");
-  villageSel.innerHTML = '<option value="">Vyberte obec…</option>' + ZONES.map(function (z) {
-    return '<optgroup label="Doprava ' + eur(z.fee) + ' · min. objednávka ' + eur(z.min) + '">' +
-      z.villages.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join("") +
-      '</optgroup>';
-  }).join("");
-  villageSel.addEventListener("change", function () { village = villageSel.value; render(); });
+  /* ---- štart: najprv ponuka zo servera, potom sa dá klikať ---- */
+  fetch(MENU_API)
+    .then(function (r) { if (!r.ok) throw new Error("server"); return r.json(); })
+    .then(function (data) {
+      if (!data.ok) throw new Error("server");
+      MENU = data.rozvoz || [];
+      TOPPINGS = data.toppings || [];
+      GLUTEN_FREE = data.glutenFree || { name: "", price: 0 };
+      ZONES = data.deliveryZones || [];
+      ALL = MENU.reduce(function (a, g) { return a.concat(g.items); }, []);
+      PIZZA_IDS = new Set((MENU.find(function (g) { return g.id === "pizza"; }) || { items: [] }).items.map(function (i) { return i.id; }));
+      spusti();
+    })
+    .catch(function () {
+      $("menuCol").innerHTML = '<p class="cat-note">Ponuku sa nepodarilo načítať. Obnovte stránku alebo nám zavolajte na <a href="tel:+421914271271">+421 914 271 271</a>.</p>';
+    });
+
+  function spusti() {
+    vykresliPonuku();
+    naplnObce();
+    napojUdalosti();
+    render();
+  }
 
   /* ---- vykreslenie ponuky ---- */
-  var menuCol = $("menuCol");
-  var html = "";
-  MENU.forEach(function (group) {
-    html += '<section class="menu-cat" id="o-' + group.id + '"><h2>' + esc(group.cat) + '</h2>' +
-            (group.note ? '<p class="cat-note">' + esc(group.note) + '</p>' : "");
-    group.items.forEach(function (it) {
-      html += '<div class="m-item">' +
-        (it.w ? '<span class="m-w">' + esc(it.w) + '</span>' : "") + '<span class="m-name">' + esc(displayName(it)) + '</span>' +
-        '<span class="m-price">' + eur(it.price) + '</span>' +
-        '<button class="add-btn" type="button" data-id="' + it.id + '" aria-label="Pridať ' + esc(displayName(it)) + '">+</button>' +
-        (it.desc ? '<p class="m-desc">' + esc(it.desc) + '</p>' : "") +
-        (it.alg ? '<p class="m-alg">alergény: ' + esc(it.alg) + '</p>' : "") +
-        '</div>';
+  function vykresliPonuku() {
+    var html = "";
+    MENU.forEach(function (group) {
+      html += '<section class="menu-cat" id="o-' + group.id + '"><h2>' + esc(group.cat) + '</h2>' +
+              (group.note ? '<p class="cat-note">' + esc(group.note) + '</p>' : "");
+      group.items.forEach(function (it) {
+        var w = vaha(it);
+        html += '<div class="m-item">' +
+          (w ? '<span class="m-w">' + esc(w) + '</span>' : "") + '<span class="m-name">' + esc(displayName(it)) + '</span>' +
+          '<span class="m-price">' + eur(it.price) + '</span>' +
+          '<button class="add-btn" type="button" data-id="' + esc(it.id) + '" aria-label="Pridať ' + esc(displayName(it)) + '">+</button>' +
+          (it.desc ? '<p class="m-desc">' + esc(it.desc) + '</p>' : "") +
+          (it.allergens && it.allergens.length ? '<p class="m-alg">alergény: ' + it.allergens.join(", ") + '</p>' : "") +
+          '</div>';
+      });
+      html += '</section>';
     });
-    html += '</section>';
-  });
-  menuCol.innerHTML = html;
+    $("menuCol").innerHTML = html;
+  }
 
-  var ALL = MENU.reduce(function (a, g) { return a.concat(g.items); }, []);
-  var findItem = function (id) { return ALL.find(function (i) { return i.id === id; }); };
+  /* dropdown obcí – skupiny podľa ceny dopravy a minimálnej objednávky */
+  function naplnObce() {
+    var sel = $("f-village");
+    sel.innerHTML = '<option value="">Vyberte obec…</option>' + ZONES.map(function (z) {
+      return '<optgroup label="Doprava ' + eur(z.fee) + ' · min. objednávka ' + eur(z.min) + '">' +
+        z.villages.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join("") +
+        '</optgroup>';
+    }).join("");
+    sel.addEventListener("change", function () { village = sel.value; render(); });
+  }
 
   /* ---- košík ---- */
   var unit = function (e) { return e.base + e.extras.reduce(function (s, x) { return s + x.price; }, 0) + (e.gf ? GLUTEN_FREE.price : 0); };
@@ -71,7 +93,7 @@
   }
   function add(id) {
     var it = findItem(id);
-    if (PIZZA_IDS.has(id) || it.addonGroups || (it.addons && it.addons.length)) { openAddons(id); return; }
+    if (PIZZA_IDS.has(id) || (it.addonGroups && it.addonGroups.length)) { openAddons(id); return; }
     addToCart(id);
     flash(displayName(it));
   }
@@ -88,7 +110,7 @@
     } else {
       body.innerHTML = cart.map(function (e) {
         var u = unit(e), sum = u * e.qty; sub += sum;
-        var extraTxt = e.extras.map(function (x) { return x.name; }).concat(e.gf ? ["bezlepkové cesto"] : []).join(", ");
+        var extraTxt = e.extras.map(function (x) { return x.name; }).concat(e.gf ? [GLUTEN_FREE.name] : []).join(", ");
         return '<div class="line">' +
           '<div class="line-name">' + esc(e.name) + '<small>' + eur(u) + (extraTxt ? " · " + esc(extraTxt) : "") + '</small></div>' +
           '<div class="qty"><button type="button" data-dec="' + e.key + '" aria-label="Menej">−</button><span>' + e.qty + '</span><button type="button" data-inc="' + e.key + '" aria-label="Viac">+</button></div>' +
@@ -121,39 +143,56 @@
   }
 
   /* ---- udalosti ---- */
-  document.addEventListener("click", function (e) {
-    var a = e.target.closest("[data-id]"); if (a) { add(a.dataset.id); return; }
-    var dec = e.target.closest("[data-dec]"); if (dec) { setQty(dec.dataset.dec, -1); return; }
-    var inc = e.target.closest("[data-inc]"); if (inc) { setQty(inc.dataset.inc, +1); return; }
-  });
-
-  document.querySelectorAll(".mode-btn").forEach(function (b) {
-    b.addEventListener("click", function () {
-      document.querySelectorAll(".mode-btn").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
-      b.setAttribute("aria-pressed", "true");
-      mode = b.dataset.mode;
-      $("modeLabel").textContent = mode === "rozvoz" ? "Rozvoz · Bešeňová a okolie" : "Osobný odber · Vila 27";
-      $("addrField").style.display = (mode === "rozvoz") ? "block" : "none";
-      $("f-addr").required = (mode === "rozvoz");
-      render();
+  function napojUdalosti() {
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest("[data-id]"); if (a) { add(a.dataset.id); return; }
+      var dec = e.target.closest("[data-dec]"); if (dec) { setQty(dec.dataset.dec, -1); return; }
+      var inc = e.target.closest("[data-inc]"); if (inc) { setQty(inc.dataset.inc, +1); return; }
     });
-  });
 
-  var orderModal = $("orderModal");
+    document.querySelectorAll(".mode-btn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll(".mode-btn").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        mode = b.dataset.mode;
+        $("modeLabel").textContent = mode === "rozvoz" ? "Rozvoz · Bešeňová a okolie" : "Osobný odber · Vila 27";
+        $("addrField").style.display = (mode === "rozvoz") ? "block" : "none";
+        $("f-addr").required = (mode === "rozvoz");
+        render();
+      });
+    });
+
+    $("orderClose").addEventListener("click", closeOrder);
+    orderModal.addEventListener("click", function (e) { if (e.target === orderModal) closeOrder(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeOrder(); closeAddons(); } });
+    $("cartPill").addEventListener("click", function () { $("cart").scrollIntoView({ behavior: "smooth", block: "start" }); });
+
+    $("checkoutBtn").addEventListener("click", function () {
+      if (!cart.length) return;
+      if (mode === "rozvoz") $("addrLabel").textContent = "Ulica a číslo · " + village;
+      orderModal.classList.add("show");
+      $("f-name").focus();
+    });
+
+    $("orderForm").addEventListener("submit", odosli);
+
+    modal.addEventListener("change", function () { enforceLimits(); updateTopSum(); });
+    modal.addEventListener("click", function (e) { if (e.target === modal) closeAddons(); });
+    $("topClose").addEventListener("click", closeAddons);
+    $("topSkip").addEventListener("click", function () {
+      var name = displayName(findItem(pendingItem));
+      addToCart(pendingItem); flash(name); closeAddons();
+    });
+    $("topAdd").addEventListener("click", function () {
+      var name = displayName(findItem(pendingItem));
+      addToCart(pendingItem, chosenExtras(), chosenGf()); flash(name); closeAddons();
+    });
+  }
+
+  var orderModal = document.getElementById("orderModal");
   var closeOrder = function () { orderModal.classList.remove("show"); };
-  $("checkoutBtn").addEventListener("click", function () {
-    if (!cart.length) return;
-    if (mode === "rozvoz") $("addrLabel").textContent = "Ulica a číslo · " + village;
-    orderModal.classList.add("show");
-    $("f-name").focus();
-  });
-  $("orderClose").addEventListener("click", closeOrder);
-  orderModal.addEventListener("click", function (e) { if (e.target === orderModal) closeOrder(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeOrder(); closeAddons(); } });
 
-  $("cartPill").addEventListener("click", function () { $("cart").scrollIntoView({ behavior: "smooth", block: "start" }); });
-
-  $("orderForm").addEventListener("submit", function (e) {
+  function odosli(e) {
     e.preventDefault();
     var f = e.target, el = f.elements, btn = f.querySelector('button[type="submit"]');
     if (btn.disabled) return;
@@ -173,8 +212,7 @@
         note: el.note.value.trim()
       },
       items: cart.map(function (it) {
-        return { name: it.name, qty: it.qty, unitPrice: unit(it),
-                 extras: it.extras.map(function (x) { return x.name; }).concat(it.gf ? ["bezlepkové cesto"] : []) };
+        return { id: it.id, qty: it.qty, extras: it.extras.map(function (x) { return x.name; }), gf: it.gf };
       })
     };
 
@@ -195,11 +233,11 @@
         flash("Objednávku sa nepodarilo odoslať (" + why + "). Skúste to znova alebo zavolajte na +421 914 271 271.", 8000, true);
       })
       .then(function () { btn.disabled = false; btn.textContent = label; });
-  });
+  }
 
   /* ---- doplnky (pizza aj bežné doplnky k jedlu) ---- */
   var pendingItem = null;
-  var modal = $("topModal");
+  var modal = document.getElementById("topModal");
 
   var chosenExtras = function () {
     return Array.prototype.map.call(modal.querySelectorAll(".top-opt input.top-cb:checked"), function (cb) {
@@ -248,25 +286,12 @@
         }).join("") +
         '<div class="top-group"><label class="top-opt"><input type="checkbox" id="gfCheck"><span class="tname">' + esc(GLUTEN_FREE.name) + '</span><span class="m-price">+ ' + eur(GLUTEN_FREE.price) + '</span></label></div>';
     } else {
-      var groups = it.addonGroups || [{ options: it.addons }];
-      $("topBody").innerHTML = groups.map(groupBlock).join("");
+      $("topBody").innerHTML = (it.addonGroups || []).map(groupBlock).join("");
     }
     enforceLimits(); updateTopSum();
     modal.classList.add("show");
   }
   function closeAddons() { modal.classList.remove("show"); pendingItem = null; }
-
-  modal.addEventListener("change", function () { enforceLimits(); updateTopSum(); });
-  modal.addEventListener("click", function (e) { if (e.target === modal) closeAddons(); });
-  $("topClose").addEventListener("click", closeAddons);
-  $("topSkip").addEventListener("click", function () {
-    var name = displayName(findItem(pendingItem));
-    addToCart(pendingItem); flash(name); closeAddons();
-  });
-  $("topAdd").addEventListener("click", function () {
-    var name = displayName(findItem(pendingItem));
-    addToCart(pendingItem, chosenExtras(), chosenGf()); flash(name); closeAddons();
-  });
 
   /* ---- oznámenie ---- */
   var toastT;
@@ -277,6 +302,4 @@
     clearTimeout(toastT);
     toastT = setTimeout(function () { t.classList.remove("show"); }, ms || 1600);
   }
-
-  render();
 })();
