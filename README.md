@@ -9,7 +9,7 @@ v reštaurácii si ju o pár sekúnd vyzdvihne a vytlačí bloček na CK710-USE.
  │ mobil / │ POST   │ /api/orders    │  GET   │ print-agent.js   │
  │ web     ├───────►│ fronta         │◄───────┤ (Node, beží      │
  └─────────┘        │ /api/queue     │  každých│  na PC)         │
-                    │ /admin         │   5 s   └────────┬─────────┘
+                    │ /admin-objedn. │   5 s   └────────┬─────────┘
                     └────────────────┘                  │ ESC/POS
                                                         ▼
                                                   ┌───────────┐
@@ -29,7 +29,8 @@ a vytlačia sa, len čo sa spojenie vráti.
 ```
 index.html, jedalny-listok.html, kontakt.html, objednavka.html, *.css, logo.png
 menu.json             – ponuka (rozvoz + jedálny lístok); záloha, keď Redis mlčí
-admin.html            – nástenka objednávok pre obsluhu (chránená PRINT_TOKEN)
+admin.html            – rozcestník: objednávky / správa ponuky
+admin-objednavky.html – nástenka objednávok pre obsluhu (chránená PRINT_TOKEN)
 admin-produkty.html   – správa ponuky pre majiteľa (meno + heslo)
 vercel.json
 dev-server.js         – lokálny server na test na jednom PC (namiesto Vercelu)
@@ -69,7 +70,7 @@ s medzerou a zátvorkami robila problémy.
 
    | Premenná | Hodnota |
    |---|---|
-   | `PRINT_TOKEN` | dlhé náhodné heslo, napr. z `openssl rand -hex 24` — obsluha ho zadáva na `/admin` |
+   | `PRINT_TOKEN` | dlhé náhodné heslo, napr. z `openssl rand -hex 24` — obsluha ho zadáva na `/admin-objednavky` |
    | `ADMIN_USER` | meno majiteľa do `/admin-produkty` |
    | `ADMIN_PASS` | heslo majiteľa do `/admin-produkty` |
 
@@ -107,7 +108,7 @@ node dev-server.js
 
 a otvor **http://localhost:3005/objednavka.html**. Server obsluhuje stránku aj
 `/api/*` rovnako ako Vercel, len objednávky drží v pamäti (po vypnutí zmiznú) a
-`PRINT_TOKEN` je `test` – ten zadaj v `/admin`, prípadne do `agent/config.json`
+`PRINT_TOKEN` je `test` – ten zadaj v `/admin-objednavky`, prípadne do `agent/config.json`
 (`token`: `test`, `apiUrl`: `http://localhost:3005`) na test celej cesty až po tlač.
 
 ---
@@ -205,9 +206,10 @@ zadá sama, takže ceny ani súčty tam nie sú:
 
 ---
 
-## 5. Obsluha: /admin
+## 5. Obsluha: /admin-objednavky
 
-`https://tvoja-domena.vercel.app/admin` — zadá sa `PRINT_TOKEN` a beží prehľad
+`https://tvoja-domena.vercel.app/admin` je rozcestník na obe nástenky.
+`/admin-objednavky` — zadá sa `PRINT_TOKEN` a beží prehľad
 objednávok, ktorý sa sám obnovuje každých 5 s. Má aj zvukové upozornenie na novú
 objednávku (treba ho raz zapnúť tlačidlom, prehliadače inak zvuk nepustia).
 

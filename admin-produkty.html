@@ -44,6 +44,7 @@
     padding:.45rem .9rem;font-size:.82rem;font-weight:600;min-height:38px;
   }
   .bar .tool:hover{background:var(--ink-2)}
+  .tool-odkaz{display:inline-flex;align-items:center;text-decoration:none}
   .cas{font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}
 
   /* ---------- prihlásenie ---------- */
@@ -57,6 +58,8 @@
     border-color:var(--ink);font-size:.95rem;font-weight:700;
   }
   .err{color:var(--accent);font-size:.88rem;margin-top:12px;min-height:1.2em;font-weight:600}
+  .spat-odkaz{margin-top:18px;font-size:.86rem}
+  .spat-odkaz a{color:var(--grey)}
   .vystraha{
     margin-top:14px;padding:10px 12px;background:#F6E9E6;border-left:4px solid var(--accent);
     font-size:.88rem;border-radius:2px;
@@ -194,6 +197,7 @@
   <button id="prihlas">Prihlásiť sa</button>
   <div class="err" id="gateErr"></div>
   <div class="vystraha" id="gateDraft" hidden></div>
+  <p class="spat-odkaz"><a href="/admin">Späť na výber</a></p>
 </div>
 
 <!-- ---------- editor ---------- -->
@@ -208,6 +212,7 @@
     <span class="spacer"></span>
     <span class="cas" id="odpocet"></span>
     <button type="button" class="tool" id="zalohyBtn">Zálohy</button>
+    <a class="tool tool-odkaz" href="/admin-objednavky">Objednávky</a>
     <button type="button" class="tool" id="odhlas">Odhlásiť sa</button>
   </div>
 

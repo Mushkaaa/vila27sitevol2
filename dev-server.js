@@ -57,5 +57,7 @@ http.createServer((req, res) => {
   else serveStatic(url.pathname, res);
 }).listen(PORT, () => {
   console.log(`Vila 27 lokálne:  http://localhost:${PORT}/objednavka.html`);
-  console.log(`Admin:            http://localhost:${PORT}/admin   (token: ${process.env.PRINT_TOKEN})`);
+  console.log(`Správa:           http://localhost:${PORT}/admin`);
+  console.log(`  objednávky:     /admin-objednavky   (kód: ${process.env.PRINT_TOKEN})`);
+  console.log(`  ponuka:         /admin-produkty     (adminvila27 / adminvila27)`);
 });
