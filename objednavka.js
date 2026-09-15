@@ -91,9 +91,12 @@
     else { var it = findItem(id); cart.push({ key: key, id: id, name: displayName(it), base: it.price, extras: extras, gf: gf, qty: 1 }); }
     render();
   }
+  // pizza doplnky sa zapínajú v admine; staršie položky príznak nemajú, tam rozhoduje kategória
+  var maPizzaDoplnky = function (it) { return it.pizzaToppings != null ? !!it.pizzaToppings : PIZZA_IDS.has(it.id); };
+
   function add(id) {
     var it = findItem(id);
-    if (PIZZA_IDS.has(id) || (it.addonGroups && it.addonGroups.length)) { openAddons(id); return; }
+    if (maPizzaDoplnky(it) || (it.addonGroups && it.addonGroups.length)) { openAddons(id); return; }
     addToCart(id);
     flash(displayName(it));
   }
@@ -273,7 +276,7 @@
 
   function openAddons(id) {
     pendingItem = id;
-    var it = findItem(id), isPizza = PIZZA_IDS.has(id);
+    var it = findItem(id), isPizza = maPizzaDoplnky(it);
     $("topTitle").textContent = isPizza ? "Pizza doplnky" : "Doplnky k jedlu";
     $("topFor").textContent = displayName(it) + " · " + eur(it.price);
 

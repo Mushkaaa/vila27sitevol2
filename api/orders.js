@@ -19,7 +19,7 @@ const zonaPre = (zony, obec) => zony.find(z => z.villages.includes(obec)) || nul
 
 /** Cena doplnku podľa uloženého menu. null = taký doplnok k tomuto jedlu nepatrí. */
 function cenaDoplnku(produkt, nazov, spolocne) {
-  if (produkt.catId === 'pizza') {
+  if (menu.maPizzaDoplnky(produkt)) {
     const skupina = spolocne.toppings.find(g => g.items.includes(nazov));
     return skupina ? skupina.price : null;
   }
@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Chýba meno alebo telefón' });
     }
 
-    const spolocne = menu.spolocne();
+    const spolocne = await menu.spolocne();
     const mode = body.mode === 'odber' ? 'odber' : 'rozvoz';
     const village = mode === 'rozvoz' ? txt(c.village, 60) : '';
     const zone = mode === 'rozvoz' ? zonaPre(spolocne.deliveryZones, village) : null;

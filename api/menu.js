@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
       rozvoz: menu.ibaOnline(rozvoz),
       jedalnylistok: menu.ibaOnline(jedalnylistok),
       alergeny: menu.ALERGENY,
-      ...menu.spolocne(),
+      ...(await menu.spolocne()),
     });
   } catch (e) {
     console.error('Menu sa nepodarilo poskladať:', e);

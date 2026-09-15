@@ -243,6 +243,7 @@
     <div class="tabs" role="group" aria-label="Ktorú ponuku upravujem">
       <button type="button" class="on" data-zoznam="rozvoz">Rozvoz<span class="neulozene" hidden>zmeny</span></button>
       <button type="button" data-zoznam="jedalnylistok">Jedálny lístok<span class="neulozene" hidden>zmeny</span></button>
+      <button type="button" data-zoznam="doprava">Doprava<span class="neulozene" hidden>zmeny</span></button>
     </div>
     <span class="spacer"></span>
     <span class="cas" id="odpocet"></span>
@@ -303,6 +304,11 @@
         <label>Alergény</label>
         <div class="alerg" id="p-alerg"></div>
       </div>
+      <div class="field">
+        <label>Doplnky, ktoré si zákazník môže priobjednať</label>
+        <div class="alerg" id="p-mods"></div>
+        <div class="hint">Vyberú sa v košíku pri pridaní produktu. Ceny sú pevne dané, menia sa len v kóde.</div>
+      </div>
       <div class="field"><label for="p-poradie">Poradie v kategórii (nepovinné)</label><input id="p-poradie" inputmode="numeric" placeholder="0" />
         <div class="hint">Nižšie číslo je vyššie v zozname.</div>
       </div>
@@ -359,13 +365,15 @@
 const $ = s => document.querySelector(s);
 const DRAFT = "vila27_rozpracovane";      // len sessionStorage, nikdy localStorage
 const ZOZNAMY = ["rozvoz", "jedalnylistok"];
+const SEKCIE = [...ZOZNAMY, "doprava"];   // doprava sa ukladá rovnakým tlačidlom ako ponuka
 
 /* Zmeny sa zbierajú v prehliadači a na server idú naraz až tlačidlom
    „Uložiť zmeny“. Pre každý zoznam si držíme, ako vyzeral pri načítaní
    (povodne) a ako vyzerá teraz – z toho sa ráta, čo sa vlastne zmenilo. */
-let data = { rozvoz: null, jedalnylistok: null };
+let data = { rozvoz: null, jedalnylistok: null, doprava: null };
 let zoznam = "rozvoz";
 let ALERGENY = {};
+let MODIFIKATORY = [];
 let upravovany = null;        // id produktu v okne (null = nový)
 let tmpPocitadlo = 0;         // dočasné id nových produktov, server im dá vlastné
 let koniec = 0, tikot = null, minutSedenia = 20;
@@ -373,10 +381,11 @@ let koniec = 0, tikot = null, minutSedenia = 20;
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
 const eur = n => (Number(n) || 0).toFixed(2).replace(".", ",") + " €";
 const kopia = x => JSON.parse(JSON.stringify(x));
-const NAZOV = { rozvoz: "Rozvoz", jedalnylistok: "Jedálny lístok" };
+const NAZOV = { rozvoz: "Rozvoz", jedalnylistok: "Jedálny lístok", doprava: "Doprava" };
 const POPIS = {
   rozvoz: "Toto vidia zákazníci v objednávkovom formulári. Vypnutý produkt sa nedá objednať.",
   jedalnylistok: "Toto je jedálny a nápojový lístok na stránke. Vypnutý produkt sa na ňom nezobrazí.",
+  doprava: "Kam rozvážate, koľko stojí doprava a od akej sumy objednávku beriete. Obec smie byť len v jednom pásme.",
 };
 const pocetSlovom = n => n === 1 ? "produkt" : (n >= 2 && n <= 4) ? "produkty" : "produktov";
 function zmenyText(n){
@@ -416,7 +425,7 @@ async function api(cesta, telo){
 function vypadloPrihlasenie(){
   if (jeCoUlozit()){
     const odlozene = {};
-    ZOZNAMY.forEach(z => { if (data[z]) odlozene[z] = data[z].teraz; });
+    SEKCIE.forEach(z => { if (data[z]) odlozene[z] = data[z].teraz; });
     try{ sessionStorage.setItem(DRAFT, JSON.stringify(odlozene)); }catch(e){}
   }
   naGate("Prihlásenie vypršalo. Prihláste sa znova.");
@@ -424,7 +433,7 @@ function vypadloPrihlasenie(){
 
 function naGate(chyba){
   clearInterval(tikot); tikot = null;
-  data = { rozvoz: null, jedalnylistok: null };
+  data = { rozvoz: null, jedalnylistok: null, doprava: null };
   upravovany = null;
   zavriVsetky();
   $("#lista").hidden = true;
@@ -451,11 +460,12 @@ function tik(){
 function zmeneny(z){
   return !!data[z] && JSON.stringify(data[z].povodne) !== JSON.stringify(data[z].teraz);
 }
-function jeCoUlozit(){ return ZOZNAMY.some(zmeneny); }
+function jeCoUlozit(){ return SEKCIE.some(zmeneny); }
 
 /** Ľudský zoznam zmien oproti stavu pri načítaní. */
 function rozdiel(z){
   if (!data[z]) return [];
+  if (z === "doprava") return zmeneny(z) ? ["upravená doprava"] : [];
   const { povodne, teraz } = data[z];
   const out = [];
 
@@ -477,7 +487,7 @@ function rozdiel(z){
 }
 
 function oznacZmeny(){
-  const vsetky = ZOZNAMY.flatMap(z => rozdiel(z).map(t => ({ z, t })));
+  const vsetky = SEKCIE.flatMap(z => rozdiel(z).map(t => ({ z, t })));
   const pocet = vsetky.length;
   const lista = $("#lista");
 
@@ -532,9 +542,37 @@ function riadok(p){
   </div>`;
 }
 
+/** Pásma sa píšu priamo do polí – prepisujú sa len pri pridaní či zmazaní,
+    inak by pod rukami skákal kurzor. */
+function vykresliDopravu(){
+  const zony = data.doprava ? data.doprava.teraz : [];
+  $("#vypis").innerHTML = zony.map((z, i) => `
+    <section class="kat">
+      <div class="kat-hlava">
+        <h3>Pásmo ${i + 1}</h3>
+        <span class="konce"><button type="button" data-zmaz-zonu="${i}">Zmazať pásmo</button></span>
+      </div>
+      <div class="dvojica">
+        <div class="field"><label for="z-fee-${i}">Cena dopravy v eurách</label>
+          <input id="z-fee-${i}" inputmode="decimal" data-zona="${i}" data-pole="fee" value="${esc(String(z.fee).replace(".", ","))}" /></div>
+        <div class="field"><label for="z-min-${i}">Minimálna objednávka v eurách</label>
+          <input id="z-min-${i}" inputmode="decimal" data-zona="${i}" data-pole="min" value="${esc(String(z.min).replace(".", ","))}" /></div>
+      </div>
+      <div class="field"><label for="z-obce-${i}">Obce – každá na vlastnom riadku</label>
+        <textarea id="z-obce-${i}" data-zona="${i}" data-pole="villages" rows="${Math.max(3, z.villages.length)}">${esc(z.villages.join("\n"))}</textarea>
+        <div class="hint">Presne tak, ako to má zákazník vidieť vo výbere obce.</div>
+      </div>
+    </section>`).join("") || '<p style="color:var(--grey);padding:8px 0">Zatiaľ tu nie je ani jedno pásmo.</p>';
+}
+
 function vykresli(){
   $("#nadpis").textContent = NAZOV[zoznam];
   $("#podnadpis").textContent = POPIS[zoznam];
+
+  const doprava = zoznam === "doprava";
+  $("#novyBtn").hidden = doprava;
+  $("#novaKatBtn").textContent = doprava ? "Pridať pásmo" : "Pridať kategóriu";
+  if (doprava){ vykresliDopravu(); oznacZmeny(); return; }
 
   $("#vypis").innerHTML = kategorie().map(c => `
     <section class="kat">
@@ -555,6 +593,8 @@ function vykresli(){
 async function nacitaj(z){
   const odpoved = await api("/api/admin-menu", { akcia: "nacitaj", zoznam: z });
   ALERGENY = odpoved.alergeny || ALERGENY;
+  MODIFIKATORY = odpoved.modifikatory || MODIFIKATORY;
+  if (odpoved.doprava && !data.doprava) data.doprava = { povodne: kopia(odpoved.doprava), teraz: kopia(odpoved.doprava) };
   data[z] = { povodne: kopia(odpoved.kategorie), teraz: kopia(odpoved.kategorie) };
   $("#bezDatabazy").hidden = odpoved.trvale !== false;
 }
@@ -567,7 +607,7 @@ async function publikuj(){
   btn.disabled = true; btn.textContent = "Ukladám…";
   try{
     const zmeny = {};
-    ZOZNAMY.forEach(z => { if (zmeneny(z)) zmeny[z] = data[z].teraz; });
+    SEKCIE.forEach(z => { if (zmeneny(z)) zmeny[z] = data[z].teraz; });
     const odpoved = await api("/api/admin-menu", { akcia: "ulozVsetko", zmeny });
 
     Object.keys(odpoved.zoznamy || {}).forEach(z => {
@@ -586,7 +626,7 @@ async function publikuj(){
 
 function zahod(){
   if (!confirm("Zahodiť všetky neuložené zmeny a vrátiť sa k poslednej uloženej podobe?")) return;
-  ZOZNAMY.forEach(z => { if (data[z]) data[z].teraz = kopia(data[z].povodne); });
+  SEKCIE.forEach(z => { if (data[z]) data[z].teraz = kopia(data[z].povodne); });
   sessionStorage.removeItem(DRAFT);
   zavriVsetky();
   vykresli();
@@ -604,6 +644,22 @@ function poliaAlergenov(vybrane){
     <span>${n} ${esc(ALERGENY[n])}</span></label>`).join("");
 }
 
+/** Staršie položky ešte nemajú zoznam kľúčov – tam sa doplnky odvodia z toho, čo majú uložené. */
+function klucePre(produkt, catId){
+  if (!produkt) return [];
+  if (Array.isArray(produkt.mods)) return produkt.mods;
+  return MODIFIKATORY.filter(m => m.pizza
+    ? (produkt.pizzaToppings != null ? produkt.pizzaToppings : catId === "pizza")
+    : (produkt.addonGroups || []).some(g => (g.options || []).some(o => o.name === m.name))
+  ).map(m => m.kluc);
+}
+
+function poliaModifikatorov(vybrane){
+  $("#p-mods").innerHTML = MODIFIKATORY.map(m => `
+    <label><input type="checkbox" value="${esc(m.kluc)}" ${vybrane.includes(m.kluc) ? "checked" : ""} />
+    <span>${esc(m.popis)}${m.pizza ? "" : " · " + eur(m.price)}</span></label>`).join("");
+}
+
 function otvorProdukt(produkt, catId){
   upravovany = produkt ? produkt.id : null;
   $("#pTitul").textContent = produkt ? "Upraviť produkt" : "Nový produkt";
@@ -617,6 +673,7 @@ function otvorProdukt(produkt, catId){
   poliaAlergenov(produkt ? (produkt.allergens || []) : []);
 
   const vKategorii = catId || (produkt ? (kategorie().find(c => c.items.some(i => i.id === produkt.id)) || {}).id : (kategorie()[0] || {}).id);
+  poliaModifikatorov(klucePre(produkt, vKategorii));
   $("#p-kat").innerHTML = kategorie().map(c => `<option value="${esc(c.id)}" ${c.id === vKategorii ? "selected" : ""}>${esc(c.cat)}</option>`).join("");
 
   $("#oknoProdukt").classList.add("show");
@@ -656,7 +713,11 @@ function ulozProdukt(){
     desc: $("#p-popis").value.trim(),
     sort: Number.isFinite(poradie) ? poradie : 0,
     online: stary ? stary.online !== false : true,
+    mods: Array.from($("#p-mods").querySelectorAll("input:checked")).map(i => i.value),
   };
+  // skupiny s cenami poskladá server z kľúčov – lokálne by boli hneď neaktuálne
+  delete produkt.addonGroups;
+  delete produkt.pizzaToppings;
 
   kategorie().forEach(c => { c.items = c.items.filter(i => i.id !== produkt.id); });
   ciel.items.push(produkt);
@@ -704,6 +765,23 @@ function pridajKategoriu(){
   zavriVsetky();
   vykresli();
   oznam("Kategória pridaná. Nezabudnite zmeny uložiť.");
+}
+
+/* ---------- doprava ---------- */
+function pridajZonu(){
+  if (!data.doprava) return;
+  data.doprava.teraz.push({ fee: 0, min: 0, villages: [] });
+  vykresli();
+  oznam("Pásmo pridané. Doplňte obce a uložte zmeny.");
+}
+
+function zmazZonu(i){
+  const z = data.doprava && data.doprava.teraz[i];
+  if (!z || !confirm(`Naozaj zmazať pásmo ${i + 1}?
+
+Prestanete rozvážať do obcí: ${z.villages.join(", ") || "—"}`)) return;
+  data.doprava.teraz.splice(i, 1);
+  vykresli();
 }
 
 /* ---------- zálohy ---------- */
@@ -774,7 +852,7 @@ function obnovOdlozene(){
   sessionStorage.removeItem(DRAFT);
   let d; try{ d = JSON.parse(raw); }catch{ return; }
   let vratene = 0;
-  ZOZNAMY.forEach(z => {
+  SEKCIE.forEach(z => {
     if (d[z] && data[z]){ data[z].teraz = d[z]; vratene++; }
   });
   if (vratene) oznam("Neuložené zmeny sú späť. Uložte ich tlačidlom dole.");
@@ -810,12 +888,26 @@ $("#novyBtn").addEventListener("click", () => {
   otvorProdukt(null, null);
 });
 $("#novaKatBtn").addEventListener("click", () => {
+  if (zoznam === "doprava"){ pridajZonu(); return; }
   $("#k-nazov").value = ""; $("#kChyba").textContent = "";
   $("#oknoKat").classList.add("show");
   $("#k-nazov").focus();
 });
 
+// pásma sa píšu rovno do modelu, prekresľovať sa nesmie – kurzor by odskočil
+$("#vypis").addEventListener("input", e => {
+  const el = e.target.closest("[data-zona]");
+  if (!el || !data.doprava) return;
+  const z = data.doprava.teraz[Number(el.dataset.zona)];
+  if (!z) return;
+  if (el.dataset.pole === "villages") z.villages = el.value.split("\n").map(o => o.trim()).filter(Boolean);
+  else z[el.dataset.pole] = el.value;      // číslo skontroluje a zaokrúhli server
+  oznacZmeny();
+});
+
 $("#vypis").addEventListener("click", e => {
+  const zmazZ = e.target.closest("[data-zmaz-zonu]");
+  if (zmazZ){ zmazZonu(Number(zmazZ.dataset.zmazZonu)); return; }
   const prep = e.target.closest("[data-prep]");
   if (prep){ prepni(prep.dataset.prep, prep.getAttribute("aria-pressed") !== "true"); return; }
   const uprav = e.target.closest("[data-uprav]");

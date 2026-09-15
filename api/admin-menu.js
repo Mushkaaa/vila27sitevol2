@@ -58,25 +58,63 @@ function skontrolujProdukt(vstup, obsadeneId, povodne) {
   const id = povodne ? povodne.id : jedineceId(name, obsadeneId);
   const poradie = Number(vstup.sort);
 
-  return {
-    produkt: {
-      ...(povodne || {}),
-      id,
-      name,
-      price: round(cena),
-      weight: {
-        value: hodnota,
-        unit: jednotka,
-        text: hodnota != null ? `${String(hodnota).replace('.', ',')} ${jednotka}` : '',
-      },
-      allergens: cisla.sort((a, b) => a - b),
-      additives: text(vstup.additives, 80),
-      desc: text(vstup.desc, 400),
-      no: povodne ? povodne.no : null,
-      sort: Number.isFinite(poradie) ? poradie : 0,
-      online: vstup.online !== false,
+  const produkt = {
+    ...(povodne || {}),
+    id,
+    name,
+    price: round(cena),
+    weight: {
+      value: hodnota,
+      unit: jednotka,
+      text: hodnota != null ? `${String(hodnota).replace('.', ',')} ${jednotka}` : '',
     },
+    allergens: cisla.sort((a, b) => a - b),
+    additives: text(vstup.additives, 80),
+    desc: text(vstup.desc, 400),
+    no: povodne ? povodne.no : null,
+    sort: Number.isFinite(poradie) ? poradie : 0,
+    online: vstup.online !== false,
   };
+
+  // doplnky: z prehliadača berieme len zaškrtnuté kľúče, skupiny s cenami staviame tu
+  if (Array.isArray(vstup.mods)) {
+    produkt.mods = vstup.mods.filter(k => menu.MODIFIKATORY.some(m => m.kluc === k));
+    Object.assign(produkt, menu.doplnkyZKlucov(produkt.mods));
+  }
+
+  return { produkt };
+}
+
+/** Skontroluje rozvozové pásma z formulára. Vracia { chyba } alebo { zony }. */
+function skontrolujZony(vstup) {
+  if (!Array.isArray(vstup) || !vstup.length) return { chyba: 'Musí ostať aspoň jedno pásmo.' };
+  if (vstup.length > 30) return { chyba: 'Pásiem je príliš veľa.' };
+
+  const zony = [];
+  const obsadene = new Map();
+  for (const z of vstup) {
+    const cena = Number(String(z.fee).replace(',', '.'));
+    if (!Number.isFinite(cena) || cena < 0) return { chyba: 'Cena dopravy musí byť číslo od nuly.' };
+    if (cena > 100) return { chyba: 'Cena dopravy je nezmyselne vysoká.' };
+
+    const limit = Number(String(z.min).replace(',', '.'));
+    if (!Number.isFinite(limit) || limit < 0) return { chyba: 'Minimálna objednávka musí byť číslo od nuly.' };
+    if (limit > 1000) return { chyba: 'Minimálna objednávka je nezmyselne vysoká.' };
+
+    const obce = [];
+    for (const o of (Array.isArray(z.villages) ? z.villages : [])) {
+      const obec = text(o, 60);
+      if (!obec) continue;
+      // jedna obec v dvoch pásmach = zákazník by platil podľa toho, ktoré je v zozname skôr
+      if (obsadene.has(obec)) return { chyba: `Obec ${obec} je v dvoch pásmach.` };
+      obsadene.set(obec, true);
+      obce.push(obec);
+    }
+    if (!obce.length) return { chyba: `Pásmo za ${round(cena)} € nemá ani jednu obec.` };
+
+    zony.push({ fee: round(cena), min: round(limit), villages: obce });
+  }
+  return { zony };
 }
 
 const najdiKategoriu = (kategorie, id) => kategorie.find(c => c.id === id);
@@ -135,6 +173,8 @@ function skontrolujZoznam(vstup, stare) {
   return { kategorie };
 }
 
+module.exports.skontrolujZony = skontrolujZony;   // pre api/_menu.test.js
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     auth.bezCache(res);
@@ -157,7 +197,14 @@ module.exports = async (req, res) => {
     if (akcia === 'ulozVsetko') {
       const zmeny = body.zmeny && typeof body.zmeny === 'object' ? body.zmeny : {};
       const ciele = Object.keys(zmeny).filter(z => menu.jeZoznam(z));
-      if (!ciele.length) return res.status(400).json({ ok: false, error: 'Nie je čo uložiť.' });
+      if (!ciele.length && !zmeny.doprava) return res.status(400).json({ ok: false, error: 'Nie je čo uložiť.' });
+
+      let zony = null;
+      if (zmeny.doprava) {
+        const vysledok = skontrolujZony(zmeny.doprava);
+        if (vysledok.chyba) return res.status(400).json({ ok: false, error: `Doprava: ${vysledok.chyba}` });
+        zony = vysledok.zony;
+      }
 
       // najprv sa skontroluje všetko, až potom sa zapisuje – nech neostane uložená polovica
       const pripravene = [];
@@ -172,6 +219,7 @@ module.exports = async (req, res) => {
         await menu.uloz(p.zoznam, p.kategorie, 'hromadná úprava');
         vysledok[p.zoznam] = p.kategorie;
       }
+      if (zony) { await menu.ulozZony(zony); vysledok.doprava = zony; }
       return res.status(200).json({ ok: true, zoznamy: vysledok });
     }
 
@@ -186,7 +234,7 @@ module.exports = async (req, res) => {
     if (akcia === 'nacitaj') {
       // bez databázy si každé volanie funkcie drží vlastnú pamäť – úpravy by sa
       // navonok nikdy neprejavili, a to musí majiteľ vedieť
-      return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY, trvale: store.hasRedis });
+      return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY, modifikatory: menu.MODIFIKATORY, doprava: await menu.nacitajZony(), trvale: store.hasRedis });
     }
 
     // ---- nová kategória ----
@@ -266,3 +314,5 @@ module.exports = async (req, res) => {
     return res.status(500).json({ ok: false, error: 'Zmenu sa nepodarilo uložiť.' });
   }
 };
+
+module.exports.skontrolujZony = skontrolujZony;   // pre api/_menu.test.js
