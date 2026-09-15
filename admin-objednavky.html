@@ -21,6 +21,8 @@
     --tap:44px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  /* .lista aj .alert majú display:flex – bez tohto by ich atribút hidden neskryl */
+  [hidden]{display:none!important}
   html{-webkit-text-size-adjust:100%}
   body{
     font-family:"Source Sans 3","Source Sans Pro",system-ui,sans-serif;
