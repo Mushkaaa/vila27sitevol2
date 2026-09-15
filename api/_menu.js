@@ -40,15 +40,17 @@ const MODIFIKATORY = [
   { kluc: 'losos', popis: '100g losos', skupina: 'Doplnky', name: '100g losos', price: 5 },
   { kluc: 'omacka-syrova', popis: '0,1l syrová omáčka', skupina: 'Omáčka', max: 1, name: '0,1l syrová omáčka', price: 2 },
   { kluc: 'omacka-demi-glace', popis: '0,1l demi-glace omáčka', skupina: 'Omáčka', max: 1, name: '0,1l demi-glace omáčka', price: 2 },
-  { kluc: 'priloha-hranolky', popis: 'Zemiakové hranolky', skupina: 'Príloha', max: 2, name: 'Zemiakové hranolky', price: 2.9 },
-  { kluc: 'priloha-batat', popis: 'Batátové hranolky', skupina: 'Príloha', max: 2, name: 'Batátové hranolky', price: 3.9 },
-  { kluc: 'priloha-baby-zemiaky', popis: 'Baby pečené zemiaky', skupina: 'Príloha', max: 2, name: 'Baby pečené zemiaky', price: 2.9 },
-  { kluc: 'priloha-ryza', popis: 'Ryža', skupina: 'Príloha', max: 2, name: 'Ryža', price: 2.3 },
+  // `produkt` = cena sa berie z tejto položky v kategórii Prílohy (price je len záloha, keby ju niekto zmazal)
+  { kluc: 'priloha-hranolky', popis: 'Zemiakové hranolky', skupina: 'Príloha', max: 2, name: '200g zemiakové hranolky', price: 2.9, produkt: 'pr1' },
+  { kluc: 'priloha-batat', popis: 'Batátové hranolky', skupina: 'Príloha', max: 2, name: '200g batátové hranolky', price: 3.9, produkt: 'pr2' },
+  { kluc: 'priloha-baby-zemiaky', popis: 'Baby pečené zemiaky', skupina: 'Príloha', max: 2, name: '200g baby pečené zemiaky', price: 2.9, produkt: 'pr3' },
+  { kluc: 'priloha-ryza', popis: 'Ryža', skupina: 'Príloha', max: 2, name: '200g ryža', price: 2.3, produkt: 'pr4' },
   { kluc: 'pizza-doplnky', popis: 'Pizza doplnky (všetky toppingy + bezlepkové cesto)', pizza: true },
 ];
 
-/** Zo zaškrtnutých kľúčov spraví doplnky produktu. Neznáme kľúče padnú pod stôl. */
-function doplnkyZKlucov(kluce) {
+/** Zo zaškrtnutých kľúčov spraví doplnky produktu. Neznáme kľúče padnú pod stôl.
+ *  `cena` vráti aktuálnu cenu doplnku (cenník z adminu, naviazaná príloha). */
+function doplnkyZKlucov(kluce, cena = m => m.price) {
   const skupiny = [];
   let pizza = false;
   for (const m of MODIFIKATORY) {
@@ -56,11 +58,10 @@ function doplnkyZKlucov(kluce) {
     if (m.pizza) { pizza = true; continue; }
     let g = skupiny.find(s => s.title === m.skupina);
     if (!g) { g = { title: m.skupina, options: [] }; if (m.max) g.max = m.max; skupiny.push(g); }
-    g.options.push({ name: m.name, price: m.price });
+    g.options.push({ name: m.name, price: cena(m) });
   }
   return { addonGroups: skupiny, pizzaToppings: pizza };
 }
-
 /** Má produkt pizza doplnky? Staršie položky príznak nemajú – tam rozhoduje kategória. */
 const maPizzaDoplnky = p => (p.pizzaToppings != null ? !!p.pizzaToppings : p.catId === 'pizza');
 
@@ -93,21 +94,93 @@ async function opravVahy(zoznam, data) {
   return data;
 }
 
+/* ---------- cenník doplnkov (upravuje sa v admine na záložke Doplnky) ---------- */
+const KLUC_CENY = 'vila27:ceny-doplnkov';
+const BEZLEPKOVE = 'bezlepkove';
+const toppingId = i => `topping-${i}`;
+
+/** Uložené ceny { id: cena }; čo tam nie je, platí cena z kódu / menu.json. */
+async function nacitajCeny() {
+  try {
+    const raw = await store.get(KLUC_CENY);
+    const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return d && typeof d === 'object' ? d : {};
+  } catch (e) {
+    console.error('Cenník doplnkov sa nepodarilo načítať:', e.message);
+    return {};
+  }
+}
+const ulozCeny = ceny => store.set(KLUC_CENY, JSON.stringify(ceny));
+
+/** Cena doplnku: príloha podľa svojho produktu, inak cenník, inak cena v kóde. */
+const cenaModifikatora = (m, ceny, produkty) =>
+  produkty.has(m.produkt) ? produkty.get(m.produkt) : (ceny[m.kluc] ?? m.price);
+
+/**
+ * Doplnky sa vždy poskladajú z MODIFIKATORY – zmena názvu alebo ceny sa tak
+ * prejaví aj na uložených produktoch. Staršie položky bez `mods` sa spoznajú
+ * podľa názvu (aktuálneho alebo pôvodného v `popis`). Rovnaké ceny dostanú aj
+ * riadky doplnkov na jedálnom lístku (menuAddons, extras kategórie).
+ */
+function aktualneDoplnky(data, ceny) {
+  const produkty = new Map(data.flatMap(c => c.items).map(i => [i.id, i.price]));
+  const cena = m => cenaModifikatora(m, ceny, produkty);
+  const gf = zoSuboru().glutenFree;
+  const riadok = a => {
+    const m = MODIFIKATORY.find(x => !x.pizza && x.name === a.name);
+    if (m) a.price = cena(m);
+    else if (a.name === gf.name) a.price = ceny[BEZLEPKOVE] ?? gf.price;
+  };
+  data.forEach(c => {
+    (c.extras || []).forEach(riadok);
+    c.items.forEach(i => {
+      (i.menuAddons || []).forEach(riadok);
+      if (!Array.isArray(i.mods)) {
+        const mena = (i.addonGroups || []).flatMap(g => (g.options || []).map(o => o.name));
+        if (!mena.length) return;
+        i.mods = MODIFIKATORY.filter(m => !m.pizza && (mena.includes(m.name) || mena.includes(m.popis))).map(m => m.kluc);
+        if (i.pizzaToppings) i.mods.push('pizza-doplnky');
+      }
+      Object.assign(i, doplnkyZKlucov(i.mods, cena));
+    });
+  });
+  return data;
+}
+
 /** Kategórie jedného zoznamu. Redis → menu.json. */
 async function nacitaj(zoznam) {
   if (!jeZoznam(zoznam)) throw new Error('Neznámy zoznam: ' + zoznam);
+  const ceny = await nacitajCeny();
   try {
     const raw = await store.get(KLUC(zoznam));
     if (raw) {
       const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (Array.isArray(data) && data.length) return await opravVahy(zoznam, data);
+      if (Array.isArray(data) && data.length) return aktualneDoplnky(await opravVahy(zoznam, data), ceny);
     }
   } catch (e) {
     console.error('Menu z Redisu sa nepodarilo načítať, beriem menu.json:', e.message);
   }
-  return kopia(zoSuboru()[zoznam]);
+  return aktualneDoplnky(kopia(zoSuboru()[zoznam]), ceny);
 }
 
+/**
+ * Všetky doplnky s cenou pre admin. Prílohy sú `viazane` – ich cena sa mení
+ * cenou produktu v Rozvoze, tu sa len zobrazia.
+ */
+async function cennikDoplnkov() {
+  const ceny = await nacitajCeny();
+  const rozvoz = (await nacitaj('rozvoz')).flatMap(c => c.items);
+  const produkty = new Map(rozvoz.map(i => [i.id, i.price]));
+  const s = zoSuboru();
+  return [
+    ...MODIFIKATORY.filter(m => !m.pizza).map(m => {
+      const p = rozvoz.find(i => i.id === m.produkt);
+      return { id: m.kluc, nazov: m.name, skupina: m.skupina, price: cenaModifikatora(m, ceny, produkty), viazane: p ? p.name : null };
+    }),
+    ...s.toppings.map((g, i) => ({ id: toppingId(i), nazov: `${g.g} ${g.items.join(', ')}`, skupina: 'Pizza doplnky', price: ceny[toppingId(i)] ?? g.price, viazane: null })),
+    { id: BEZLEPKOVE, nazov: s.glutenFree.name, skupina: 'Pizza doplnky', price: ceny[BEZLEPKOVE] ?? s.glutenFree.price, viazane: null },
+  ];
+}
 /** Rozvozové pásma. Redis → menu.json, rovnako ako ponuka. */
 async function nacitajZony() {
   try {
@@ -128,7 +201,12 @@ const ulozZony = zony => store.set(KLUC_DOPRAVA, JSON.stringify(zony));
 /** Spoločné časti (pizza doplnky, bezlepkové cesto, rozvozové pásma). */
 async function spolocne() {
   const s = zoSuboru();
-  return { toppings: s.toppings, glutenFree: s.glutenFree, deliveryZones: await nacitajZony() };
+  const ceny = await nacitajCeny();
+  return {
+    toppings: s.toppings.map((g, i) => ({ ...g, price: ceny[toppingId(i)] ?? g.price })),
+    glutenFree: { ...s.glutenFree, price: ceny[BEZLEPKOVE] ?? s.glutenFree.price },
+    deliveryZones: await nacitajZony(),
+  };
 }
 
 /** Uloží zoznam a starú verziu odloží ako zálohu. */
@@ -177,4 +255,4 @@ function podlaId(kategorie) {
   return mapa;
 }
 
-module.exports = { ZOZNAMY, ALERGENY, MODIFIKATORY, doplnkyZKlucov, maPizzaDoplnky, jeZoznam, nacitaj, uloz, nacitajZony, ulozZony, zalohy, obnov, ibaOnline, podlaId, spolocne };
+module.exports = { cennikDoplnkov, nacitajCeny, ulozCeny, ZOZNAMY, ALERGENY, MODIFIKATORY, doplnkyZKlucov, maPizzaDoplnky, jeZoznam, nacitaj, uloz, nacitajZony, ulozZony, zalohy, obnov, ibaOnline, podlaId, spolocne };

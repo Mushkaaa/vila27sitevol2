@@ -119,6 +119,8 @@
   .r-popis{font-size:.82rem;color:var(--ink);margin-top:3px;line-height:1.35}
   .r-cena{font-weight:900;font-size:1.05rem;font-variant-numeric:tabular-nums;white-space:nowrap}
   .r-akcie{display:flex;gap:6px;flex:none}
+  .cena-pole{flex:none;width:120px}
+  .cena-pole input{width:100%;padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:3px;background:#fff;color:var(--ink);font:inherit;text-align:right;font-variant-numeric:tabular-nums}
   .r-akcie button{
     background:transparent;border-color:var(--line);color:var(--grey);
     padding:.4rem .7rem;font-size:.8rem;font-weight:600;min-height:36px;
@@ -246,6 +248,7 @@
     <div class="tabs" role="group" aria-label="Ktorú ponuku upravujem">
       <button type="button" class="on" data-zoznam="rozvoz">Rozvoz<span class="neulozene" hidden>zmeny</span></button>
       <button type="button" data-zoznam="jedalnylistok">Jedálny lístok<span class="neulozene" hidden>zmeny</span></button>
+      <button type="button" data-zoznam="doplnky">Doplnky<span class="neulozene" hidden>zmeny</span></button>
       <button type="button" data-zoznam="doprava">Doprava<span class="neulozene" hidden>zmeny</span></button>
     </div>
     <span class="spacer"></span>
@@ -368,12 +371,13 @@
 const $ = s => document.querySelector(s);
 const DRAFT = "vila27_rozpracovane";      // len sessionStorage, nikdy localStorage
 const ZOZNAMY = ["rozvoz", "jedalnylistok"];
-const SEKCIE = [...ZOZNAMY, "doprava"];   // doprava sa ukladá rovnakým tlačidlom ako ponuka
+const SEKCIE = [...ZOZNAMY, "doplnky", "doprava"];   // doplnky aj doprava sa ukladajú rovnakým tlačidlom ako ponuka
+const PRAZDNE = () => ({ rozvoz: null, jedalnylistok: null, doplnky: null, doprava: null });
 
 /* Zmeny sa zbierajú v prehliadači a na server idú naraz až tlačidlom
    „Uložiť zmeny“. Pre každý zoznam si držíme, ako vyzeral pri načítaní
    (povodne) a ako vyzerá teraz – z toho sa ráta, čo sa vlastne zmenilo. */
-let data = { rozvoz: null, jedalnylistok: null, doprava: null };
+let data = PRAZDNE();
 let zoznam = "rozvoz";
 let ALERGENY = {};
 let MODIFIKATORY = [];
@@ -384,10 +388,11 @@ let koniec = 0, tikot = null, minutSedenia = 20;
 const esc = s => String(s ?? "").replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
 const eur = n => (Number(n) || 0).toFixed(2).replace(".", ",") + " €";
 const kopia = x => JSON.parse(JSON.stringify(x));
-const NAZOV = { rozvoz: "Rozvoz", jedalnylistok: "Jedálny lístok", doprava: "Doprava" };
+const NAZOV = { rozvoz: "Rozvoz", jedalnylistok: "Jedálny lístok", doplnky: "Doplnky", doprava: "Doprava" };
 const POPIS = {
   rozvoz: "Toto vidia zákazníci v objednávkovom formulári. Vypnutý produkt sa nedá objednať.",
   jedalnylistok: "Toto je jedálny a nápojový lístok na stránke. Vypnutý produkt sa na ňom nezobrazí.",
+  doplnky: "Ceny doplnkov k jedlám a pizza doplnkov. Platia v online objednávke aj na jedálnom lístku. Prílohy majú cenu svojho produktu v Rozvoze.",
   doprava: "Kam rozvážate, koľko stojí doprava a od akej sumy objednávku beriete. Obec smie byť len v jednom pásme.",
 };
 const pocetSlovom = n => n === 1 ? "produkt" : (n >= 2 && n <= 4) ? "produkty" : "produktov";
@@ -436,7 +441,7 @@ function vypadloPrihlasenie(){
 
 function naGate(chyba){
   clearInterval(tikot); tikot = null;
-  data = { rozvoz: null, jedalnylistok: null, doprava: null };
+  data = PRAZDNE();
   upravovany = null;
   zavriVsetky();
   $("#lista").hidden = true;
@@ -461,6 +466,7 @@ function tik(){
 
 /* ---------- čo sa zmenilo ---------- */
 function zmeneny(z){
+  if (z === "doplnky") return !!data[z] && rozdiel(z).length > 0;   // „3“ a „3,00“ je tá istá cena
   return !!data[z] && JSON.stringify(data[z].povodne) !== JSON.stringify(data[z].teraz);
 }
 function jeCoUlozit(){ return SEKCIE.some(zmeneny); }
@@ -469,6 +475,10 @@ function jeCoUlozit(){ return SEKCIE.some(zmeneny); }
 function rozdiel(z){
   if (!data[z]) return [];
   if (z === "doprava") return zmeneny(z) ? ["upravená doprava"] : [];
+  if (z === "doplnky"){
+    const stare = new Map(data.doplnky.povodne.map(d => [d.id, Number(d.price)]));
+    return data.doplnky.teraz.filter(d => d.price === "" || stare.get(d.id) !== Number(d.price)).map(d => `cena ${d.nazov}`);
+  }
   const { povodne, teraz } = data[z];
   const out = [];
 
@@ -569,14 +579,35 @@ function vykresliDopravu(){
     </section>`).join("") || '<p style="color:var(--grey);padding:8px 0">Zatiaľ tu nie je ani jedno pásmo.</p>';
 }
 
+/** Ceny doplnkov po skupinách. Polia sa rovnako ako pri doprave neprekresľujú pri písaní. */
+function vykresliDoplnky(){
+  const riadky = data.doplnky ? data.doplnky.teraz : [];
+  const skupiny = [...new Set(riadky.map(d => d.skupina))];
+  $("#vypis").innerHTML = skupiny.map(s => `
+    <section class="kat">
+      <div class="kat-hlava"><h3>${esc(s)}</h3></div>
+      ${riadky.map((d, i) => d.skupina !== s ? "" : `
+        <div class="riadok">
+          <div class="r-text">
+            <label class="r-nazov" for="d-${i}">${esc(d.nazov)}</label>
+            ${d.viazane ? `<div class="r-popis" style="color:var(--grey)">Cena podľa produktu ${esc(d.viazane)} v Rozvoze</div>` : ""}
+          </div>
+          <div class="cena-pole"><input id="d-${i}" inputmode="decimal" data-doplnok="${i}"
+            value="${esc(String(d.price).replace(".", ","))}" ${d.viazane ? "disabled" : ""} aria-label="Cena v eurách" /></div>
+        </div>`).join("")}
+    </section>`).join("") || '<p style="color:var(--grey);padding:8px 0">Doplnky sa nepodarilo načítať.</p>';
+}
+
 function vykresli(){
   $("#nadpis").textContent = NAZOV[zoznam];
   $("#podnadpis").textContent = POPIS[zoznam];
 
-  const doprava = zoznam === "doprava";
-  $("#novyBtn").hidden = doprava;
+  const doprava = zoznam === "doprava", doplnky = zoznam === "doplnky";
+  $("#novyBtn").hidden = doprava || doplnky;
+  $("#novaKatBtn").hidden = doplnky;
   $("#novaKatBtn").textContent = doprava ? "Pridať pásmo" : "Pridať kategóriu";
   if (doprava){ vykresliDopravu(); oznacZmeny(); return; }
+  if (doplnky){ vykresliDoplnky(); oznacZmeny(); return; }
 
   $("#vypis").innerHTML = kategorie().map(c => `
     <section class="kat">
@@ -599,6 +630,7 @@ async function nacitaj(z){
   ALERGENY = odpoved.alergeny || ALERGENY;
   MODIFIKATORY = odpoved.modifikatory || MODIFIKATORY;
   if (odpoved.doprava && !data.doprava) data.doprava = { povodne: kopia(odpoved.doprava), teraz: kopia(odpoved.doprava) };
+  if (odpoved.doplnky && !data.doplnky) data.doplnky = { povodne: kopia(odpoved.doplnky), teraz: kopia(odpoved.doplnky) };
   data[z] = { povodne: kopia(odpoved.kategorie), teraz: kopia(odpoved.kategorie) };
   $("#bezDatabazy").hidden = odpoved.trvale !== false;
 }
@@ -616,6 +648,11 @@ async function publikuj(){
 
     Object.keys(odpoved.zoznamy || {}).forEach(z => {
       data[z] = { povodne: kopia(odpoved.zoznamy[z]), teraz: kopia(odpoved.zoznamy[z]) };
+    });
+    // nové ceny doplnkov aj do zaškrtávacích políčok v okne produktu
+    (odpoved.zoznamy && odpoved.zoznamy.doplnky || []).forEach(d => {
+      const m = MODIFIKATORY.find(x => x.kluc === d.id);
+      if (m) m.price = d.price;
     });
     sessionStorage.removeItem(DRAFT);
     vykresli();
@@ -870,7 +907,7 @@ function obnovOdlozene(){
 async function odhlas(){
   if (jeCoUlozit() && !confirm("Máte neuložené zmeny. Odhlásiť sa a zahodiť ich?")) return;
   sessionStorage.removeItem(DRAFT);
-  data = { rozvoz: null, jedalnylistok: null };
+  data = PRAZDNE();
   try{ await fetch("/api/admin-auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ akcia: "odhlas" }) }); }catch(e){}
   naGate("");
 }
@@ -905,6 +942,13 @@ $("#novaKatBtn").addEventListener("click", () => {
 
 // pásma sa píšu rovno do modelu, prekresľovať sa nesmie – kurzor by odskočil
 $("#vypis").addEventListener("input", e => {
+  const dopl = e.target.closest("[data-doplnok]");
+  if (dopl && data.doplnky){
+    const d = data.doplnky.teraz[Number(dopl.dataset.doplnok)];
+    if (d) d.price = dopl.value.trim().replace(",", ".");   // číslo skontroluje a zaokrúhli server
+    oznacZmeny();
+    return;
+  }
   const el = e.target.closest("[data-zona]");
   if (!el || !data.doprava) return;
   const z = data.doprava.teraz[Number(el.dataset.zona)];

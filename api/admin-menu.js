@@ -128,6 +128,25 @@ function skontrolujZony(vstup) {
 const NAZOV = { rozvoz: 'Rozvoz', jedalnylistok: 'Jedálny lístok' };
 
 /**
+ * Skontroluje cenník doplnkov. Z prehliadača prichádza [{ id, price }]; berú sa len
+ * známe doplnky, naviazané prílohy sa preskočia (majú cenu svojho produktu).
+ */
+function skontrolujCeny(vstup, cennik, stare) {
+  if (!Array.isArray(vstup)) return { chyba: 'Neplatný cenník.' };
+  const ceny = { ...stare };
+  for (const r of vstup) {
+    const d = cennik.find(x => x.id === text(r && r.id, 40));
+    if (!d) return { chyba: 'Neznámy doplnok.' };
+    if (d.viazane) continue;
+    const cena = Number(String(r.price).replace(',', '.'));
+    if (String(r.price).trim() === '' || !Number.isFinite(cena) || cena < 0) return { chyba: `Cena doplnku ${d.nazov} musí byť číslo od nuly.` };
+    if (cena > 100) return { chyba: `Cena doplnku ${d.nazov} je nezmyselne vysoká.` };
+    ceny[d.id] = round(cena);
+  }
+  return { ceny };
+}
+
+/**
  * Skontroluje celý zoznam naraz – majiteľ si nazbiera zmeny v prehliadači
  * a pošle ich jedným tlačidlom. Z prehliadača sa preberá len to, čo sa dá
  * upraviť vo formulári; doplnky k jedlám, poznámky kategórií a poradové čísla
@@ -202,7 +221,14 @@ module.exports = async (req, res) => {
     if (akcia === 'ulozVsetko') {
       const zmeny = body.zmeny && typeof body.zmeny === 'object' ? body.zmeny : {};
       const ciele = Object.keys(zmeny).filter(z => menu.jeZoznam(z));
-      if (!ciele.length && !zmeny.doprava) return res.status(400).json({ ok: false, error: 'Nie je čo uložiť.' });
+      if (!ciele.length && !zmeny.doprava && !zmeny.doplnky) return res.status(400).json({ ok: false, error: 'Nie je čo uložiť.' });
+
+      let ceny = null;
+      if (zmeny.doplnky) {
+        const vysledok = skontrolujCeny(zmeny.doplnky, await menu.cennikDoplnkov(), await menu.nacitajCeny());
+        if (vysledok.chyba) return res.status(400).json({ ok: false, error: `Doplnky: ${vysledok.chyba}` });
+        ceny = vysledok.ceny;
+      }
 
       let zony = null;
       if (zmeny.doprava) {
@@ -220,11 +246,13 @@ module.exports = async (req, res) => {
       }
 
       const vysledok = {};
+      if (ceny) await menu.ulozCeny(ceny);        // pred zoznamami, nech ich doplnky už majú nové ceny
       for (const p of pripravene) {
         await menu.uloz(p.zoznam, p.kategorie, 'hromadná úprava');
-        vysledok[p.zoznam] = p.kategorie;
+        vysledok[p.zoznam] = await menu.nacitaj(p.zoznam);   // s doplnkami prepočítanými podľa nových cien príloh
       }
       if (zony) { await menu.ulozZony(zony); vysledok.doprava = zony; }
+      vysledok.doplnky = await menu.cennikDoplnkov();   // aj prílohy, ak sa práve zmenila ich cena v Rozvoze
       return res.status(200).json({ ok: true, zoznamy: vysledok });
     }
 
@@ -239,7 +267,12 @@ module.exports = async (req, res) => {
     if (akcia === 'nacitaj') {
       // bez databázy si každé volanie funkcie drží vlastnú pamäť – úpravy by sa
       // navonok nikdy neprejavili, a to musí majiteľ vedieť
-      return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY, modifikatory: menu.MODIFIKATORY, doprava: await menu.nacitajZony(), trvale: store.hasRedis });
+      const doplnky = await menu.cennikDoplnkov();
+      const modifikatory = menu.MODIFIKATORY.map(m => {
+        const d = doplnky.find(x => x.id === m.kluc);
+        return d ? { ...m, price: d.price } : m;
+      });
+      return res.status(200).json({ ok: true, zoznam, kategorie, alergeny: menu.ALERGENY, modifikatory, doplnky, doprava: await menu.nacitajZony(), trvale: store.hasRedis });
     }
 
     return res.status(400).json({ ok: false, error: 'Neznáma akcia' });
