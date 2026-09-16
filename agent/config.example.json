@@ -2,15 +2,31 @@
   "apiUrl": "https://__DOPLNIT__.vercel.app",
   "token": "__TOKEN_ROVNAKY_AKO_PRINT_TOKEN_NA_VERCELI__",
   "pollSeconds": 5,
-
+  "idlePollSeconds": 15,
+  "closedPollSeconds": 300,
+  "hodiny": {
+    "od": "10:30",
+    "do": "22:00"
+  },
+  "keepPrintedDays": 7,
+  "timeoutMs": 10000,
   "printer": {
     "mode": "windows",
-
-    "windows": { "share": "\\\\localhost\\POS80" },
-
-    "tcp": { "host": "192.168.1.87", "port": 9100 }
+    "windows": {
+      "share": "\\\\localhost\\POS80"
+    },
+    "tcp": {
+      "host": "192.168.1.87",
+      "port": 9100
+    },
+    "command": {
+      "program": "",
+      "args": []
+    },
+    "file": {
+      "dir": "tlac"
+    }
   },
-
   "receipt": {
     "width": 42,
     "charset": "cp852",

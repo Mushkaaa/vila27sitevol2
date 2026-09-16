@@ -36,6 +36,37 @@ const DNI_HISTORIE = Number(CFG.keepPrintedDays) || 7;      // J3
 const TIMEOUT_MS = Number(CFG.timeoutMs) || 10000;          // D4
 const MAX_CAKANIE_MS = 5 * 60 * 1000;
 
+/* ---- D3: koľko sa smie pýtať servera ----
+   Pýtať sa každých 5 s nonstop = 17 280 volaní denne (~518 000 mesačne).
+   To je polovica mesačného limitu Vercel Hobby a trojnásobok mesačného
+   limitu Upstash Free (500 000 príkazov). Preto:
+     • mimo otváracích hodín sa agent pýta len raz za pár minút,
+     • keď je fronta chvíľu prázdna, spomalí na pokojný interval.
+   Čísla a prepočet sú v docs/security/REPORT.md, časť D3. */
+const HODINY = CFG.hodiny || { od: '10:30', do: '22:00' };
+const POLL_RUSNO = Number(CFG.pollSeconds) || 5;
+const POLL_POKOJ = Number(CFG.idlePollSeconds) || 15;
+const POLL_ZATVORENE = Number(CFG.closedPollSeconds) || 300;
+const PRAZDNYCH_NA_POKOJ = 12;          // ~1 minúta ticha a spomalíme
+
+const naMinuty = hhmm => { const [h, m] = String(hhmm).split(':').map(Number); return h * 60 + m; };
+
+/** Je teraz v otváracom okne podľa hodín počítača v reštaurácii? */
+function vHodinach(teraz = new Date()) {
+  if (CFG.pollAlways === true) return true;
+  const m = teraz.getHours() * 60 + teraz.getMinutes();
+  const a = naMinuty(HODINY.od), b = naMinuty(HODINY.do);
+  return a <= b ? (m >= a && m < b) : (m >= a || m < b);
+}
+
+let prazdnychZasebou = 0;
+
+/** Ako dlho čakať do ďalšej otázky. */
+function dalsiInterval() {
+  if (!vHodinach()) return POLL_ZATVORENE * 1000;
+  return (prazdnychZasebou >= PRAZDNYCH_NA_POKOJ ? POLL_POKOJ : POLL_RUSNO) * 1000;
+}
+
 const ts = () => new Date().toLocaleString('sk-SK');
 function log(msg) {
   const line = `[${ts()}] ${msg}`;
@@ -136,7 +167,8 @@ async function printOrder(order, copyLabel = '') {
 
 async function tick() {
   const { orders = [] } = await fetchJson(api('/api/queue'));
-  if (!orders.length) return;
+  if (!orders.length) { prazdnychZasebou++; return; }
+  prazdnychZasebou = 0;
 
   const done = [];
   for (const order of orders.sort((a, b) => (a.number || 0) - (b.number || 0))) {
@@ -181,20 +213,21 @@ async function main() {
   log('Tlačový agent Vila 27 spustený');
   log(`Server:    ${CFG.apiUrl}`);
   log(`Tlačiareň: ${CFG.printer.mode}`);
-  log(`Interval:  ${CFG.pollSeconds || 5}s. Toto okno nechaj otvorené.`);
+  log(`Interval:  ${POLL_RUSNO}s pri objednávkach, ${POLL_POKOJ}s v pokoji, ${POLL_ZATVORENE}s mimo ${HODINY.od}–${HODINY.do}.`);
+  log('Toto okno nechaj otvorené.');
   log('─────────────────────────────────────────');
 
-  const zaklad = (CFG.pollSeconds || 5) * 1000;
   let failStreak = 0;
   for (;;) {
-    let cakaj = zaklad;
+    let cakaj = dalsiInterval();
     try {
       await tick();
       if (failStreak) { log('Spojenie so serverom obnovené.'); failStreak = 0; }
+      cakaj = dalsiInterval();
     } catch (e) {
       failStreak++;
       // D4 – pri výpadku sa interval zdvojnásobuje, aby agent server nebil
-      cakaj = Math.min(zaklad * 2 ** Math.min(failStreak, 8), MAX_CAKANIE_MS);
+      cakaj = Math.min(POLL_RUSNO * 1000 * 2 ** Math.min(failStreak, 8), MAX_CAKANIE_MS);
       if (failStreak === 1 || failStreak % 10 === 0) {
         log(`! Server nedostupný (${e.message}), skúsim o ${Math.round(cakaj / 1000)}s`);
       }
@@ -203,6 +236,6 @@ async function main() {
   }
 }
 
-module.exports = { orez, nacitajStav, skontrolujKonfiguraciu };
+module.exports = { orez, nacitajStav, skontrolujKonfiguraciu, vHodinach, dalsiInterval };
 
 if (require.main === module) main();

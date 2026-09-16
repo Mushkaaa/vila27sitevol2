@@ -208,3 +208,6 @@
     body{font-size:17px}
     .board{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
   }
+
+/* menovka nad prístupovým kódom – prihlasovacie pole musí mať popis (P6) */
+.gate label{display:block;text-align:left;font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;opacity:.75}

@@ -490,7 +490,45 @@ test('P4 – meta popis a canonical sú unikátne na každej indexovanej stránk
   assert.ok(popisy.size >= 8);
 });
 
-test('P7 – obrázky majú alt a tie pod ohybom sa načítavajú lenivo', () => {
+test('P6 – každé vstupné pole má vlastný <label> a rozumný autocomplete', () => {
+  const pub = path.join(KOREN, "public");
+  const chyby = [];
+  let pocet = 0;
+  for (const f of fs.readdirSync(pub).filter(x => x.endsWith(".html"))) {
+    const s = fs.readFileSync(path.join(pub, f), "utf8");
+    const labels = new Set([...s.matchAll(/<label[^>]*\sfor="([^"]+)"/g)].map(m => m[1]));
+    const polia = s.match(/<(?:input|select|textarea)\s[^>]*>/g) || [];
+    pocet += polia.length;
+    for (const pole of polia) {
+      if (/type="(?:hidden|submit|button)"/.test(pole)) continue;
+      const id = (/\sid="([^"]+)"/.exec(pole) || [])[1];
+      const maPopis = /\saria-label(?:ledby)?=/.test(pole) || (id && labels.has(id));
+      if (!maPopis) chyby.push(`${f}: ${pole.slice(0, 70)}`);
+    }
+  }
+  assert.ok(pocet > 15, `čakal som viac vstupných polí, našiel ${pocet} – výraz nič nechytá`);
+  assert.deepEqual(chyby, []);
+
+  const obj = fs.readFileSync(path.join(pub, "objednavka.html"), "utf8");
+  assert.match(obj, /id="f-name"[^>]*autocomplete="name"/);
+  assert.match(obj, /id="f-phone"[^>]*inputmode="tel"/);
+  assert.match(obj, /id="f-addr"[^>]*autocomplete="street-address"/);
+  // viditeľné ohraničenie fokusu a preskočenie na obsah
+  const css = fs.readFileSync(path.join(pub, "site.css"), "utf8");
+  assert.match(css, /:focus-visible[^{]*{[^}]*outline:\s*3px/);
+  assert.match(css, /\.skip-link:focus/);
+  // stránka musí byť použiteľná aj na 320 px: jediná vec širšia než obrazovka
+  // smie byť tabuľka v zásadách, a tá je v obale s vodorovným posunom
+  const bezMedia = css.replace(/@media[^{]*{/g, "{");
+  const siroke = [...bezMedia.matchAll(/([^{}]+){([^}]*min-width:\s*(\d{3,})px[^}]*)}/g)]
+    .filter(m => Number(m[3]) > 320)
+    .map(m => m[1].trim());
+  assert.deepEqual(siroke, [".pravne table"], "v CSS pribudla pevná šírka nad 320 px");
+  assert.match(css, /\.tabulka-obal{[^}]*overflow-x:\s*auto/);
+  assert.deepEqual([...bezMedia.matchAll(/[^-]width:\s*(\d{3,})px/g)].map(m => m[1]), [],
+    "v CSS je pevná width v pixeloch");
+});
+test('P7 – obrázky majú alt, rozmery a tie pod ohybom sa načítavajú lenivo', () => {
   const pub = path.join(KOREN, 'public');
   const chyby = [];
   for (const f of fs.readdirSync(pub).filter(x => x.endsWith('.html'))) {
@@ -500,6 +538,7 @@ test('P7 – obrázky majú alt a tie pod ohybom sa načítavajú lenivo', () =>
       if (!/\salt=/.test(img)) chyby.push(`${f}#${i}: bez alt`);
       // prvý obrázok na stránke je hero (fetchpriority), ostatné majú byť lazy
       if (i > 0 && !/loading="lazy"/.test(img)) chyby.push(`${f}#${i}: bez loading="lazy"`);
+      if (!/ width="\d+"/.test(img) || !/ height="\d+"/.test(img)) chyby.push(`${f}#${i}: bez width/height`);
     });
   }
   assert.deepEqual(chyby, []);
