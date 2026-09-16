@@ -247,6 +247,7 @@ module.exports = async (req, res) => {
 
       const vysledok = {};
       if (ceny) await menu.ulozCeny(ceny);        // pred zoznamami, nech ich doplnky už majú nové ceny
+      menu.zabudniVerejnyCache();                // zmena sa má ukázať hneď, nie o päť minút
       for (const p of pripravene) {
         await menu.uloz(p.zoznam, p.kategorie, 'hromadná úprava');
         vysledok[p.zoznam] = await menu.nacitaj(p.zoznam);   // s doplnkami prepočítanými podľa nových cien príloh
@@ -258,6 +259,7 @@ module.exports = async (req, res) => {
 
     if (akcia === 'obnov') {
       const obnoveny = await menu.obnov(text(body.id, 60));
+      menu.zabudniVerejnyCache();
       return res.status(200).json({ ok: true, zoznam: obnoveny, kategorie: await menu.nacitaj(obnoveny) });
     }
 

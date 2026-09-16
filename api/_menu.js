@@ -65,6 +65,14 @@ function doplnkyZKlucov(kluce, cena = m => m.price) {
 /** Má produkt pizza doplnky? Staršie položky príznak nemajú – tam rozhoduje kategória. */
 const maPizzaDoplnky = p => (p.pizzaToppings != null ? !!p.pizzaToppings : p.catId === 'pizza');
 
+/**
+ * Krátka pamäť verejnej odpovede /api/menu (D3). Býva tu, a nie v api/menu.js,
+ * aby ju vedela zahodiť aj správa ponuky hneď po uložení – inak by majiteľ
+ * čakal až päť minút, kým sa jeho zmena ukáže návštevníkom.
+ */
+const VEREJNY_CACHE = globalThis.__vila27menu || (globalThis.__vila27menu = { do: 0, telo: null });
+function zabudniVerejnyCache() { VEREJNY_CACHE.do = 0; VEREJNY_CACHE.telo = null; }
+
 let zaloha = null;                                    // menu.json načítané raz za beh funkcie
 function zoSuboru() {
   if (!zaloha) zaloha = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'menu.json'), 'utf8'));
@@ -255,4 +263,4 @@ function podlaId(kategorie) {
   return mapa;
 }
 
-module.exports = { cennikDoplnkov, nacitajCeny, ulozCeny, ZOZNAMY, ALERGENY, MODIFIKATORY, doplnkyZKlucov, maPizzaDoplnky, jeZoznam, nacitaj, uloz, nacitajZony, ulozZony, zalohy, obnov, ibaOnline, podlaId, spolocne };
+module.exports = { VEREJNY_CACHE, zabudniVerejnyCache, cennikDoplnkov, nacitajCeny, ulozCeny, ZOZNAMY, ALERGENY, MODIFIKATORY, doplnkyZKlucov, maPizzaDoplnky, jeZoznam, nacitaj, uloz, nacitajZony, ulozZony, zalohy, obnov, ibaOnline, podlaId, spolocne };

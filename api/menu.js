@@ -18,7 +18,7 @@ const hodiny = require('./_hours');
  * 30 sekúnd oneskorenia je rovnaké, aké už povoľuje s-maxage.
  */
 const CACHE_MS = Number(process.env.MENU_CACHE_MS) || 5 * 60 * 1000;
-const pamat = globalThis.__vila27menu || (globalThis.__vila27menu = { do: 0, telo: null });
+const pamat = menu.VEREJNY_CACHE;
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
