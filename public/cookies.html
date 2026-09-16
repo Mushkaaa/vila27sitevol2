@@ -90,7 +90,14 @@
   </ul>
 
   <h3>Interná časť (<code>/admin</code>)</h3>
-  <p>Stránky pre obsluhu a majiteľa nie sú verejné a nie sú indexované. Pre úplnosť: prístupový kód obsluhy sa drží v <code>sessionStorage</code> (zmizne zavretím karty), prihlásenie majiteľa používa technickú cookie <code>vila27_sprava</code> s príznakmi <code>HttpOnly</code>, <code>Secure</code> a <code>SameSite=Strict</code>, platnú 20 minút nečinnosti. Obe sú nevyhnutné na fungovanie prihlásenia.</p>
+  <p>Stránky pre obsluhu a majiteľa nie sú verejné a nie sú indexované. Pre úplnosť uvádzame aj ich úložisko:</p>
+  <ul>
+    <li><code>vila27_sprava_kod</code> (sessionStorage) – prístupový kód obsluhy, zmizne zavretím karty.</li>
+    <li><code>vila27_admin_notif</code>, <code>vila27_admin_filter</code> (localStorage) – zapnuté upozornenia a zvolený filter na nástenke.</li>
+    <li><code>vila27_rozpracovane</code> (sessionStorage) – rozpracovaná úprava ponuky, aby sa nestratila.</li>
+    <li><code>vila27_sprava</code> (cookie <code>HttpOnly; Secure; SameSite=Strict</code>) – prihlásenie majiteľa, 20 minút nečinnosti.</li>
+  </ul>
+  <p>Všetky sú nevyhnutné na fungovanie správy a nikoho nesledujú.</p>
 
   <h2>Ako zmeniť alebo odvolať súhlas</h2>
   <p>Kedykoľvek kliknite na <button type="button" class="link-btn" data-cookie-settings>Nastavenia cookies</button> – nájdete ho aj v päte každej stránky. Odvolanie je rovnako jednoduché ako udelenie a nemá vplyv na zákonnosť spracúvania pred odvolaním.</p>
