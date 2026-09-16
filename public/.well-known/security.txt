@@ -1,0 +1,10 @@
+# Vila 27 — kontakt na hlásenie bezpečnostných problémov
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:[DOPLNIT-security-email@vila27.sk]
+Contact: tel:+421914271271
+Expires: 2027-09-16T00:00:00.000Z
+Preferred-Languages: sk, cs, en
+Canonical: https://www.vila27.sk/.well-known/security.txt
+
+# Nemáme program odmien. Za zodpovedné nahlásenie ďakujeme a ozveme sa.

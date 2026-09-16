@@ -1,0 +1,39 @@
+  :root{
+    --ink:#14110F; --ink-2:#232020; --rule:#332F2D;
+    --paper:#F5F4F0; --muted:#8C8681; --accent:#BA2727;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Source Sans 3","Source Sans Pro",system-ui,sans-serif;
+    background:var(--ink); color:var(--paper);
+    min-height:100vh; line-height:1.45;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .obal{width:100%;max-width:720px}
+  .znacka{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+  .znacka svg{height:32px;width:auto;fill:var(--paper)}
+  .znacka span{font-size:.76rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+  .volby{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .volba{
+    display:block;text-decoration:none;color:var(--paper);
+    border:1.5px solid var(--rule);border-radius:3px;padding:26px 22px 22px;
+    transition:background .12s,border-color .12s;
+  }
+  .volba:hover,.volba:focus-visible{background:var(--ink-2);border-color:var(--paper);outline:none}
+  .volba h2{font-size:1.35rem;font-weight:900;letter-spacing:-.01em;margin-bottom:6px}
+  .volba p{color:var(--muted);font-size:.92rem}
+  .volba .kto{
+    display:inline-block;margin-top:16px;font-size:.66rem;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--rule);border-radius:2px;padding:.2rem .5rem;
+  }
+  .volba:hover .kto{border-color:var(--muted)}
+
+  .pata{margin-top:26px;font-size:.84rem;color:var(--muted)}
+  .pata a{color:var(--paper)}
+
+  @media (max-width:620px){
+    .volby{grid-template-columns:1fr}
+    .volba{padding:20px}
+  }
