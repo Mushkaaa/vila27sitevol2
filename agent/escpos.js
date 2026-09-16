@@ -36,8 +36,25 @@ function stripDia(s) {
   return String(s).split('').map(ch => STRIP[ch] !== undefined ? STRIP[ch] : (ch.charCodeAt(0) < 128 ? ch : '?')).join('');
 }
 
+/**
+ * Riadiace znaky: C0 (0x00–0x1F), DEL (0x7F) a C1 (0x80–0x9F).
+ * Tlačiareň ich berie ako ESC/POS príkazy – „ESC p“ otvorí zásuvku na peniaze,
+ * „GS V“ odreže papier. Do textu z objednávky teda nesmú preniknúť.
+ */
+const RIADIACE = /[\u0000-\u001F\u007F-\u009F]/g;
+
+/**
+ * Druhá vrstva obrany (J4). Server text čistí už pri prijatí objednávky
+ * (api/_sanitize.js), agent mu však neverí a čistí ho znova tesne pred tým,
+ * než sa z neho stanú bajty pre tlačiareň.
+ */
+function ocisti(str) {
+  return String(str == null ? '' : str).normalize('NFC').replace(RIADIACE, '');
+}
+
 /** Zakóduje text do bajtov podľa zvolenej znakovej sady. */
-function encodeText(str, charset) {
+function encodeText(rawStr, charset) {
+  const str = ocisti(rawStr);
   if (charset === 'ascii') return Buffer.from(stripDia(str), 'latin1');
   // cp852
   const out = [];
@@ -150,4 +167,4 @@ function wrap(s, w) {
   return lines.length ? lines : [''];
 }
 
-module.exports = { Receipt, encodeText, stripDia, wrap, CP852 };
+module.exports = { Receipt, encodeText, stripDia, wrap, CP852, ocisti };

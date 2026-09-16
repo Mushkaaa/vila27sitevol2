@@ -35,10 +35,13 @@ const TEL_PODPORA = '+421 914 271 271';
 const round = n => Math.round(n * 100) / 100;
 const zonaPre = (zony, obec) => zony.find(z => z.villages.includes(obec)) || null;
 
-// C2 – nič iné ako tieto kľúče sa neprijme
-const POLIA_TELO = new Set(['mode', 'customer', 'items', 'orderKey', 'trvanieMs', 'web', 'turnstileToken']);
+// C2 – nič iné ako tieto kľúče sa neprijme.
+// Cenové polia sú zámerne v zozname: staršie verzie stránky ich posielali.
+// Neodmietame ich, ale ani im neveríme – cenu vždy ráta server (C1).
+const IGNOROVANE_CENY = ['price', 'unitPrice', 'lineTotal', 'subtotal', 'total', 'fee'];
+const POLIA_TELO = new Set(['mode', 'customer', 'items', 'orderKey', 'trvanieMs', 'web', 'turnstileToken', ...IGNOROVANE_CENY]);
 const POLIA_ZAKAZNIK = new Set(['name', 'phone', 'village', 'address', 'time', 'pay', 'note']);
-const POLIA_POLOZKA = new Set(['id', 'qty', 'extras', 'gf']);
+const POLIA_POLOZKA = new Set(['id', 'qty', 'extras', 'gf', 'name', ...IGNOROVANE_CENY]);
 
 const chyba = (res, kod, sprava) => res.status(kod).json({ ok: false, error: sprava });
 

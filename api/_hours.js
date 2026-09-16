@@ -14,17 +14,23 @@ const CFG = process.env.VILA27_HOURS_FILE
 
 const PASMO = CFG.casovePasmo || 'Europe/Bratislava';
 
-const FMT = new Intl.DateTimeFormat('en-GB', {
-  timeZone: PASMO, hour12: false,
-  year: 'numeric', month: '2-digit', day: '2-digit',
-  hour: '2-digit', minute: '2-digit', weekday: 'short',
-});
+const formaty = new Map();
+function formatPre(pasmo) {
+  if (!formaty.has(pasmo)) {
+    formaty.set(pasmo, new Intl.DateTimeFormat('en-GB', {
+      timeZone: pasmo, hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', weekday: 'short',
+    }));
+  }
+  return formaty.get(pasmo);
+}
 
 const DNI = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
 
 /** Dátum → { datum:'2026-09-16', den:1..7 (po..ne), minuty: od polnoci } */
-function miestnyCas(kedy = new Date()) {
-  const p = Object.fromEntries(FMT.formatToParts(kedy).map(x => [x.type, x.value]));
+function miestnyCas(kedy = new Date(), pasmo = PASMO) {
+  const p = Object.fromEntries(formatPre(pasmo).formatToParts(kedy).map(x => [x.type, x.value]));
   const hod = p.hour === '24' ? 0 : Number(p.hour);       // niektoré ICU vracajú 24
   return {
     datum: `${p.year}-${p.month}-${p.day}`,
@@ -47,10 +53,12 @@ function vIntervale(minuty, [od, doo]) {
 const DNI_SK = ['', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota', 'nedeľa'];
 
 /**
+ * Čistá verzia – berie konfiguráciu ako parameter, aby sa dala testovať.
  * @returns {{otvorene:boolean, dovod:string, sprava:string, dnes:string[]}}
  */
-function stav(kedy = new Date()) {
-  const t = miestnyCas(kedy);
+function stavPre(cfg, kedy = new Date()) {
+  const t = miestnyCas(kedy, cfg.casovePasmo || PASMO);
+  const CFG = cfg;
   const dnes = (CFG.tyzden && CFG.tyzden[String(t.den)]) || [];
   const popisDnes = dnes.map(([a, b]) => `${a} – ${b}`);
 
@@ -75,6 +83,7 @@ function stav(kedy = new Date()) {
   };
 }
 
+const stav = (kedy = new Date()) => stavPre(CFG, kedy);
 const otvorene = kedy => stav(kedy).otvorene;
 
-module.exports = { stav, otvorene, miestnyCas, vIntervale, PASMO, CFG };
+module.exports = { stav, stavPre, otvorene, miestnyCas, vIntervale, naMinuty, PASMO, CFG };
