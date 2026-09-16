@@ -1,0 +1,12 @@
+# Vila 27 — robots.txt
+# Pozor: toto NIE JE bezpečnostné opatrenie, len prosba pre vyhľadávače.
+# Skutočnú ochranu /admin a /api zabezpečuje prihlásenie a token.
+
+User-agent: *
+Disallow: /admin
+Disallow: /admin-objednavky
+Disallow: /admin-produkty
+Disallow: /api/
+Allow: /
+
+Sitemap: https://www.vila27.sk/sitemap.xml

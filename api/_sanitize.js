@@ -1,0 +1,54 @@
+'use strict';
+/**
+ * Čistenie textu od zákazníka (C5, C2).
+ *
+ * Text z objednávky končí na termotlačiarni, ktorá riadiace bajty berie ako
+ * ESC/POS príkazy – „ESC p“ otvorí zásuvku na peniaze, „GS V“ odreže papier.
+ * Preto sa všetky riadiace znaky zahodia a zvyšok prejde cez povolený zoznam
+ * znakov: tlačiteľné ASCII + to, čo vie tlačiareň vykresliť v CP852.
+ * Čokoľvek iné sa nahradí otáznikom.
+ *
+ * To isté robí aj agent (agent/escpos.js → ocisti) – obrana v dvoch vrstvách.
+ */
+
+// Znaky z CP852 mapy v agent/escpos.js. Musia sedieť s tou mapou.
+const CP852_ZNAKY =
+  'ÇüéâäůćçłëŐőîŹÄĆÉĹĺôöĽľŚśÖÜŤťŁč' +
+  'áíóúĄąŽžĘęźČÁÂĚŻż' +
+  'đĐĎËďŇÍÎěŮÓßÔŃńňŠšŔÚŕŰýÝ´űŘř';
+
+const POVOLENE = new Set([...CP852_ZNAKY]);
+
+/** Riadiace znaky: C0 (0x00–0x1F), DEL (0x7F) a C1 (0x80–0x9F). */
+const RIADIACE = /[\u0000-\u001F\u007F-\u009F]/g;
+
+/**
+ * @param {unknown} vstup
+ * @param {number} max  maximálna dĺžka výsledku
+ */
+function ocisti(vstup, max = 200) {
+  let s = String(vstup ?? '');
+  s = s.normalize('NFC');           // „e + ˇ“ a „ě“ majú byť to isté
+  s = s.replace(RIADIACE, '');      // ESC, GS, NUL, … preč ešte pred povoleným zoznamom
+  let out = '';
+  for (const ch of s) {
+    const kod = ch.codePointAt(0);
+    if (kod >= 0x20 && kod <= 0x7e) { out += ch; continue; }   // tlačiteľné ASCII
+    if (POVOLENE.has(ch)) { out += ch; continue; }             // slovenská diakritika
+    out += '?';
+  }
+  return out.replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+/** Telefón: ponechá len číslice a úvodné +. */
+function telefon(vstup) {
+  const s = ocisti(vstup, 40).replace(/[^\d+]/g, '');
+  return s.startsWith('+') ? '+' + s.slice(1).replace(/\+/g, '') : s.replace(/\+/g, '');
+}
+
+// SK aj medzinárodne: +421 9xx xxx xxx, 09xx…, prípadne iná predvoľba.
+const TELEFON_OK = /^(\+[1-9]\d{7,14}|0\d{8,11})$/;
+
+const jeTelefon = v => TELEFON_OK.test(telefon(v));
+
+module.exports = { ocisti, telefon, jeTelefon, POVOLENE, RIADIACE };

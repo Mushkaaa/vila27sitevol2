@@ -7,6 +7,8 @@
 
   var MENU = [], TOPPINGS = [], GLUTEN_FREE = { name: "", price: 0 }, ZONES = [];
   var PIZZA_IDS = new Set(), ALL = [];
+  var HODINY = { otvorene: true, sprava: "" };
+  var OTVORENE_OD = Date.now();                 // C7 – čas strávený na stránke
 
   var eur = function (n) { return n.toFixed(2).replace(".", ",") + " €"; };
   var esc = function (s) { return String(s == null ? "" : s).replace(/[<>&"]/g, function (c) { return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]; }); };
@@ -32,19 +34,48 @@
       TOPPINGS = data.toppings || [];
       GLUTEN_FREE = data.glutenFree || { name: "", price: 0 };
       ZONES = data.deliveryZones || [];
+      HODINY = data.hodiny || HODINY;
       ALL = MENU.reduce(function (a, g) { return a.concat(g.items); }, []);
       PIZZA_IDS = new Set((MENU.find(function (g) { return g.id === "pizza"; }) || { items: [] }).items.map(function (i) { return i.id; }));
       spusti();
     })
     .catch(function () {
-      $("menuCol").innerHTML = '<p class="cat-note">Ponuku sa nepodarilo načítať. Obnovte stránku alebo nám zavolajte na <a href="tel:+421914271271">+421 914 271 271</a>.</p>';
+      $("menuCol").textContent = "";
+      var p = document.createElement("p");
+      p.className = "cat-note";
+      p.textContent = "Ponuku sa nepodarilo načítať. Obnovte stránku alebo nám zavolajte na +421 914 271 271.";
+      $("menuCol").appendChild(p);
+      pas("zle", "Ponuka nie je dostupná", "Skúste stránku obnoviť. Ak to nepomôže, objednávku radi prijmeme telefonicky na +421 914 271 271.");
     });
+
+  /* ---- pás so stavom nad ponukou (P2) ---- */
+  function pas(druh, nadpis, text) {
+    var el = $("stavPas");
+    if (!el) return;
+    el.className = "oznam-pas " + druh;
+    el.textContent = "";
+    if (nadpis) { var b = document.createElement("b"); b.textContent = nadpis; el.appendChild(b); }
+    el.appendChild(document.createTextNode(text));
+    el.hidden = false;
+  }
+  function skryPas() { var el = $("stavPas"); if (el) el.hidden = true; }
+
+  function chybaFormulara(text) {
+    var el = $("formChyba");
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = !text;
+  }
 
   function spusti() {
     vykresliPonuku();
     naplnObce();
     napojUdalosti();
     render();
+    if (!HODINY.otvorene) {
+      pas("info", "Práve neprijímame objednávky. ",
+        (HODINY.sprava || "") + " Ponuku si môžete pokojne prezrieť; objednať sa dá v otváracích hodinách.");
+    }
   }
 
   /* ---- vykreslenie ponuky ---- */
@@ -142,7 +173,7 @@
       }
     }
     $("minNote").textContent = note;
-    $("checkoutBtn").disabled = !cart.length || blocked;
+    $("checkoutBtn").disabled = !cart.length || blocked || !HODINY.otvorene;
   }
 
   /* ---- udalosti ---- */
@@ -192,6 +223,18 @@
     });
   }
 
+  /* C8 – rovnaká objednávka odoslaná dvakrát dostane rovnaký kľúč,
+     server druhú ticho zahodí a vráti pôvodné číslo. */
+  var poslednyKluc = null;
+  function objednavkaKluc() {
+    if (!poslednyKluc) {
+      poslednyKluc = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : String(Date.now()) + Math.random().toString(16).slice(2);
+    }
+    return poslednyKluc;
+  }
+
   var orderModal = document.getElementById("orderModal");
   var closeOrder = function () { orderModal.classList.remove("show"); };
 
@@ -203,8 +246,12 @@
     var label = btn.textContent;
     btn.disabled = true; btn.textContent = "Odosielam…";
 
+    chybaFormulara("");
     var payload = {
       mode: mode,
+      orderKey: objednavkaKluc(),                       // C8 – dvojklik nevyrobí dve objednávky
+      trvanieMs: Date.now() - OTVORENE_OD,              // C7
+      web: (el.web && el.web.value) || "",              // C7 – pasca, má ostať prázdna
       customer: {
         name: el.name.value.trim(),
         phone: el.phone.value.trim(),
@@ -221,21 +268,45 @@
 
     fetch(ORDER_API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
       .then(function (res) {
-        return res.json().catch(function () { throw new Error("server objednávok neodpovedá"); })
+        return res.json()
+          .catch(function () { return {}; })
           .then(function (data) { return { res: res, data: data }; });
       })
       .then(function (r) {
-        if (!r.res.ok || !r.data.ok) throw new Error(r.data.error || "Server neprijal objednávku");
-        flash("Ďakujeme, " + payload.customer.name.split(" ")[0] + ". Objednávka č. " + r.data.number + " je prijatá - " +
-          (payload.mode === "rozvoz" ? "kuriér vám zavolá z čísla +421 910 201 271." : "ozveme sa na " + payload.customer.phone + "."), 7000, true);
+        if (!r.res.ok || !r.data.ok) { odmietnutie(r.res.status, r.data); return; }
+        poslednyKluc = null;                                   // ďalšia objednávka dostane nový kľúč
+        potvrdenie(r.data, payload);
         cart = []; f.reset(); closeOrder(); render();
         window.scrollTo({ top: 0, behavior: "smooth" });
       })
-      .catch(function (err) {
-        var why = err.name === "TypeError" ? "nie je pripojenie k serveru" : err.message;
-        flash("Objednávku sa nepodarilo odoslať (" + why + "). Skúste to znova alebo zavolajte na +421 914 271 271.", 8000, true);
+      .catch(function () {
+        chybaFormulara("Nepodarilo sa spojiť so serverom. Skontrolujte pripojenie a skúste to znova, prípadne zavolajte na +421 914 271 271.");
       })
       .then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  /* ---- odpovede servera (P2) ---- */
+  function odmietnutie(stav, data) {
+    var text = data && data.error;
+    if (stav === 429) text = text || "Priveľa objednávok za sebou. Skúste to o pár minút alebo zavolajte na +421 914 271 271.";
+    else if (stav === 503) text = text || "Objednávky sú dočasne nedostupné. Zavolajte nám, prosím, na +421 914 271 271.";
+    else if (stav === 409) { HODINY.otvorene = false; render(); pas("info", "Práve neprijímame objednávky. ", text || ""); }
+    else if (stav === 413) text = "Objednávka je príliš veľká. Skúste ju rozdeliť alebo nám zavolajte.";
+    else if (!text) text = "Objednávku sa nepodarilo odoslať. Skúste to znova alebo zavolajte na +421 914 271 271.";
+    chybaFormulara(text);
+  }
+
+  function potvrdenie(data, payload) {
+    skryPas();
+    var meno = payload.customer.name.split(" ")[0];
+    var polozky = (data.items || []).map(function (i) { return i.qty + "× " + i.name; }).join(", ");
+    pas("dobre", "Objednávka č. " + data.number + " je prijatá. ",
+      "Ďakujeme, " + meno + ". " + (polozky ? polozky + ". " : "") +
+      "Spolu " + eur(Number(data.total)) + ". " +
+      (payload.mode === "rozvoz"
+        ? "Kuriér vám zavolá z čísla +421 910 201 271."
+        : "Ozveme sa na " + payload.customer.phone + ", keď bude jedlo pripravené."));
+    flash("Objednávka č. " + data.number + " je prijatá.", 6000, true);
   }
 
   /* ---- doplnky (pizza aj bežné doplnky k jedlu) ---- */

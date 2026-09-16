@@ -1,0 +1,12 @@
+# Vercel nasadzuje len public/ a api/. Všetko ostatné je interné.
+docs/
+tests/
+scripts/
+agent/
+SECURITY-GOAL.md
+CO-SOM-SPRAVIL.md
+REDESIGN.md
+README.md
+dev-server.js
+.env
+.env.example

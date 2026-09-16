@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Objednávky · Vila 27</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="fonts/source-sans-3.css" />
+<link rel="stylesheet" href="admin-objednavky.css" />
+</head>
+<body>
+
+<div id="gate" class="gate" hidden>
+  <svg viewBox="10 5 160 100" aria-label="Vila 27"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg>
+  <h2>Objednávky</h2>
+  <p>Zadajte prístupový kód, ktorý máte na obsluhu.</p>
+  <label for="tok">Prístupový kód</label>
+<input id="tok" type="password" placeholder="prístupový kód" autocapitalize="off" spellcheck="false" autocomplete="off" />
+  <button id="enter">Zobraziť objednávky</button>
+  <div class="err" id="err"></div>
+  <p class="spat-odkaz"><a href="/admin">Späť na výber</a></p>
+</div>
+
+<div id="app" hidden>
+  <div id="alert" class="alert" role="alert" aria-live="assertive" hidden>
+    <span class="a-txt">Nová objednávka</span>
+    <span class="a-nums" id="alertNums"></span>
+  </div>
+
+  <div class="bar">
+    <svg class="logo" viewBox="10 5 160 100" aria-label="Vila 27"><path d="M71.3,95H20.9l7.2-24.6c2.7-9.3,7.8-15.1,15.3-17.6c2.7-0.9,9.1-1.5,19.4-1.9c6.8-0.2,10.7-2.2,11.8-5.9l3.3-11.3 c1.3-4.5,0-6.8-3.8-6.8H40.7l3.3-11.5h32.5c5,0,8.8,1.5,11.4,4.5c2.6,3,3.2,6.9,1.8,11.8l-3.9,13.3c-2.4,8.4-7.3,13.6-14.6,15.6 c-1.3,0.4-7.7,0.9-19.2,1.6c-6.8,0.4-10.8,2.7-12.1,7l-4.1,14.1h38.8L71.3,95z"/><path d="M160.2,23.9c-0.1,1.6-5.2,12.9-15.3,33.9c-6,12.3-11.9,24.5-17.8,36.8h-12.6l32.7-68h-40l0.7-11.5h43.9 c2.6,0,4.6,0.8,6.3,2.5C159.6,19.1,160.3,21.2,160.2,23.9"/></svg>
+    <h1>Objednávky</h1>
+    <div class="tally" role="group" aria-label="Filter podľa stavu">
+      <button type="button" class="nove on" data-filter="nove"><b id="nNove">0</b> nové</button>
+      <button type="button" data-filter="vytlacene"><b id="nVytlacene">0</b> vytlačené</button>
+      <button type="button" data-filter="hotove"><b id="nHotove">0</b> hotové</button>
+      <button type="button" data-filter="vsetky"><b id="nVsetky">0</b> všetky</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="live" id="liveBox"><span class="dot"></span><span id="live">načítavam…</span></span>
+    <div class="tools">
+      <button type="button" id="notif">Upozornenia: vyp</button>
+      <button type="button" id="sound">Zvuk: vyp</button>
+      <a class="tool-odkaz" href="/admin-produkty">Správa ponuky</a>
+      <button type="button" id="logout">Odhlásiť</button>
+    </div>
+    <span class="hint" id="notifHint" hidden></span>
+  </div>
+
+  <div class="board" id="board"></div>
+</div>
+
+<div class="oznam" id="oznam" role="status" aria-live="polite"></div>
+
+<script src="admin-karta.js"></script>
+<script src="admin-objednavky.js"></script>
+</body>
+</html>
