@@ -34,9 +34,22 @@ const ZNAME_NETAJOMSTVA = [
   { vzor: '__TOKEN_ROVNAKY_AKO_PRINT_TOKEN_NA_VERCELI__', preco: 'zástupný text v config.example.json' },
   { vzor: 'TU_DAJ_TAJNY_TOKEN_ROVNAKY_AKO_NA_VERCELI', preco: 'zástupný text v pôvodnom config.json' },
   { vzor: '__DOPLNIT__', preco: 'zástupný text' },
+  { vzor: 'prikratky', preco: 'zámerne prikrátky reťazec v teste B1 – overuje, že ho server odmietne' },
 ];
 
 const ZASTUPNE = /^(__|TU_DAJ|DOPLNIT|DOPLNIŤ|XXX|YOUR_|CHANGE|EXAMPLE|TEST|test)/;
+
+/**
+ * Tajomstvá, ktoré sú už len v HISTÓRII gitu, z kódu sú preč a v REPORT.md majú
+ * pridelenú výmenu. Z pracovného stromu sú zmazané, prepisovať históriu sa
+ * neoplatí – jediná skutočná náprava je výmena hodnoty. Hlásia sa ako
+ * upozornenie, kontrolu nezhodia; keby sa taká hodnota vrátila do kódu,
+ * zachytí ju sken pracovného stromu a ten padá.
+ */
+const NA_ROTACIU = [
+  { vzor: 'adminvila27', preco: 'predvolené prihlasovacie údaje do správy ponuky – NEEDS MARTIN #1 v REPORT.md' },
+];
+const dovodRotacie = h => (NA_ROTACIU.find(z => h.includes(z.vzor)) || {}).preco || null;
 
 const PRAVIDLA = [
   { id: 'súkromný kľúč', re: /-----BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----/g },
@@ -47,6 +60,8 @@ const PRAVIDLA = [
   { id: 'Upstash REST URL s tokenom', re: /https:\/\/[a-z0-9-]+\.upstash\.io[^\s"']*[?&](?:_token|token)=[A-Za-z0-9=_-]{8,}/g },
   // hodnota priradená premennej, ktorá vyzerá ako tajomstvo
   { id: 'hodnota tajnej premennej', re: /\b(PRINT_TOKEN|ADMIN_PASS|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN|TURNSTILE_SECRET_KEY)\s*[:=]\s*["']?([^\s"',;]{8,})/g, skupina: 2 },
+  // natvrdo zapísaná náhrada: process.env.ADMIN_PASS || 'heslo'
+  { id: 'zapísaná náhrada za premennú', re: /\b(?:PRINT_TOKEN|ADMIN_PASS|ADMIN_USER|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)\s*\|\|\s*['"]([^'"]{3,})['"]/g, skupina: 1 },
   // "token": "…" v konfiguráciách
   { id: 'token v konfigurácii', re: /"(?:token|password|heslo|secret)"\s*:\s*"([^"]{8,})"/g, skupina: 1 },
 ];
@@ -68,7 +83,11 @@ function prehladaj(text, kde, nalezy) {
       if (jeZname(hodnota)) continue;
       if (ZASTUPNE.test(hodnota)) continue;
       if (/^(process\.env|import\.meta|\$\{|\$\()/.test(hodnota)) continue;   // len odkaz na premennú
-      nalezy.push({ pravidlo: p.id, kde, ukazka: maskuj(hodnota) });
+      const vHistorii = kde === 'história gitu';
+      nalezy.push({
+        pravidlo: p.id, kde, ukazka: maskuj(hodnota),
+        evidovane: vHistorii ? dovodRotacie(hodnota) : null,
+      });
     }
   }
 }
@@ -111,13 +130,26 @@ function spustiTesty() {
 
   const testy = [];
   for (let i = 0; i < riadky.length; i++) {
-    const m = /^(not ok|ok) \d+ - (.+?)\s*$/.exec(riadky[i]);
+    // TAP môže podtesty odsadiť, preto povolíme medzery na začiatku
+    const m = /^\s*(not ok|ok) \d+ - (.+?)\s*$/.exec(riadky[i]);
     if (!m) continue;
-    const meno = m[2];
-    if (/\.test\.js$/.test(meno)) continue;                 // súhrnný riadok za celý súbor
+    const meno = m[2].replace(/\s+#.*$/, '').trim();
+    if (/\.test\.js$/.test(meno) || meno === 'tests' || !meno) continue;   // súhrn za celý súbor
     testy.push({ ok: m[1] === 'ok', meno });
   }
-  return { testy, vystup, kod: r.status };
+
+  // Poistka proti tichému podpočítaniu: TAP na konci hlási, koľko testov prešlo.
+  // Keby sa tvar výstupu zmenil a parser prestal chytať, kontrola musí padnúť,
+  // nie tváriť sa, že je všetko v poriadku.
+  const hlasene = riadky
+    .map(r => /^#\s*(pass|fail)\s+(\d+)/.exec(r.trim()))
+    .filter(Boolean)
+    .reduce((s, m) => s + Number(m[2]), 0);
+  const nesedi = hlasene > 0 && hlasene !== testy.length
+    ? `TAP hlási ${hlasene} testov, parser ich našiel ${testy.length}`
+    : null;
+
+  return { testy, vystup, kod: r.status, nesedi };
 }
 
 /** „G1/G3 – …“ → ['G1','G3'] */
@@ -208,19 +240,30 @@ function main() {
   console.log(farba('tucne', '\n═══ Vila 27 – bezpečnostná kontrola ═══\n'));
 
   console.log('A1 – hľadám tajomstvá v pracovnom strome a v histórii gitu…');
-  const nalezy = skenTajomstiev();
+  const vsetkyNalezy = skenTajomstiev();
+  const nalezy = vsetkyNalezy.filter(n => !n.evidovane);
+  const evidovane = vsetkyNalezy.filter(n => n.evidovane);
+
   if (nalezy.length) {
     console.log(farba('cerv', `  Nájdené ${nalezy.length} podozrivé miesta (hodnoty sú zámerne skryté):`));
     nalezy.forEach(n => console.log(`  • ${n.pravidlo} – ${n.kde} – ${n.ukazka}`));
   } else {
-    console.log(farba('sed', '  Nič. Nájdené boli iba názvy premenných a zástupné texty.'));
+    console.log(farba('sed', '  V kóde nič. Nájdené boli iba názvy premenných a zástupné texty.'));
+  }
+  if (evidovane.length) {
+    console.log(farba('sed', `  ${evidovane.length}× nález iba v histórii gitu, z kódu je preč a výmena je evidovaná:`));
+    evidovane.forEach(n => console.log(farba('sed', `  • ${n.pravidlo} – ${n.ukazka} – ${n.evidovane}`)));
   }
 
   console.log('\nSpúšťam testy (node --test tests/*.test.js)…');
-  const { testy, vystup, kod } = spustiTesty();
+  const { testy, vystup, kod, nesedi } = spustiTesty();
   if (!testy.length) {
     console.log(farba('cerv', 'Testy sa nepodarilo spustiť:'));
     console.log(vystup.slice(-3000));
+    process.exit(1);
+  }
+  if (nesedi) {
+    console.log(farba('cerv', 'Výstup testov sa nepodarilo spoľahlivo prečítať: ' + nesedi));
     process.exit(1);
   }
 
