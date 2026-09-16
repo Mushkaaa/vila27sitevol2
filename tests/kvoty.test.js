@@ -53,7 +53,7 @@ test.before(async () => {
       ADMIN_PASS: 'testovacie-heslo-12',
       VILA27_HOURS_FILE: path.join(__dirname, 'fixtures', 'hodiny-otvorene.json'),
       KV_REST_API_URL: `http://127.0.0.1:${PORT_REDIS}`,
-      KV_REST_API_TOKEN: 'falosny-token-pre-merani-0123456789',
+      KV_REST_API_TOKEN: 'falosny-token-len-pre-fake-upstash',
       ORDER_GLOBAL_LIMIT: '100000',
       ORDER_IP_LIMIT: '100000',
       MENU_CACHE_MS: String(CACHE_NA_MERANIE_MS),   // krátky, nech sa test nečaká päť minút

@@ -35,6 +35,8 @@ const ZNAME_NETAJOMSTVA = [
   { vzor: 'TU_DAJ_TAJNY_TOKEN_ROVNAKY_AKO_NA_VERCELI', preco: 'zástupný text v pôvodnom config.json' },
   { vzor: '__DOPLNIT__', preco: 'zástupný text' },
   { vzor: 'prikratky', preco: 'zámerne prikrátky reťazec v teste B1 – overuje, že ho server odmietne' },
+  { vzor: 'falosny-token-len-pre-fake-upstash', preco: 'token pre tests/fake-upstash.js, ktorý beží na 127.0.0.1 – žiadna skutočná služba' },
+  { vzor: 'falosny-token-pre-merani', preco: 'starší názov toho istého falošného tokenu, ostal v histórii gitu' },
 ];
 
 const ZASTUPNE = /^(__|TU_DAJ|DOPLNIT|DOPLNIŤ|XXX|YOUR_|CHANGE|EXAMPLE|TEST|test)/;
