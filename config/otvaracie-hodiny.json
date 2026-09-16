@@ -1,0 +1,20 @@
+{
+  "_popis": "Otváracie hodiny pre PRÍJEM OBJEDNÁVOK. Časy sú v pásme Europe/Bratislava.",
+  "_zdroj": "Súčasný web Vila 27: „Pondelok – nedeľa 11:00 – 21:30“.",
+  "_poznamka": "[DOPLNIŤ: potvrdiť, či sa príjem online objednávok končí skôr ako prevádzka (napr. posledná objednávka 21:00).]",
+  "casovePasmo": "Europe/Bratislava",
+  "tyzden": {
+    "1": [["11:00", "21:30"]],
+    "2": [["11:00", "21:30"]],
+    "3": [["11:00", "21:30"]],
+    "4": [["11:00", "21:30"]],
+    "5": [["11:00", "21:30"]],
+    "6": [["11:00", "21:30"]],
+    "7": [["11:00", "21:30"]]
+  },
+  "zatvorene": [
+    "2026-12-24",
+    "2026-12-25"
+  ],
+  "_zatvorene_poznamka": "[DOPLNIŤ: skutočný zoznam dní, keď je zatvorené (sviatky, dovolenka).]"
+}

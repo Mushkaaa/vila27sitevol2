@@ -14,7 +14,10 @@ const path = require('path');
 
 const PORT = Number(process.env.PORT) || 3005;
 const ROOT = __dirname;
-process.env.PRINT_TOKEN ||= 'test';
+// Lokálny token musí spĺňať rovnaké pravidlo ako na ostro (aspoň 32 znakov).
+process.env.PRINT_TOKEN ||= 'lokalny-vyvojovy-token-0123456789abcdef';
+process.env.ADMIN_USER ||= 'vyvoj';
+process.env.ADMIN_PASS ||= 'lokalne-heslo-na-vyvoj';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -58,6 +61,6 @@ http.createServer((req, res) => {
 }).listen(PORT, () => {
   console.log(`Vila 27 lokálne:  http://localhost:${PORT}/objednavka.html`);
   console.log(`Správa:           http://localhost:${PORT}/admin`);
-  console.log(`  objednávky:     /admin-objednavky   (kód: ${process.env.PRINT_TOKEN})`);
-  console.log(`  ponuka:         /admin-produkty     (adminvila27 / adminvila27)`);
+  console.log(`  objednávky:     /admin-objednavky   (kód je vypísaný nižšie)`);
+  console.log(`  ponuka:         /admin-produkty     (${process.env.ADMIN_USER} / ${process.env.ADMIN_PASS})`);
 });

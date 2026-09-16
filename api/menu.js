@@ -7,9 +7,13 @@
  * zakaždým do Redisu, ale úprava ponuky sa prejavila rýchlo.
  */
 const menu = require('./_menu');
+const hodiny = require('./_hours');
 
 module.exports = async (req, res) => {
-  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Použi GET' });
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ ok: false, error: 'Použite GET.' });
+  }
 
   try {
     const [rozvoz, jedalnylistok] = await Promise.all([
@@ -19,16 +23,18 @@ module.exports = async (req, res) => {
 
     // Krátko, nech sa úprava ponuky prejaví na stránke do minúty. Zvyšok
     // návštevnosti aj tak odchytí CDN, do Redisu sa chodí nanajvýš raz za minútu.
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
+    // Kratšie okno, lebo v odpovedi je aj stav otvorené/zatvorené (C4).
+    res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
     return res.status(200).json({
       ok: true,
       rozvoz: menu.ibaOnline(rozvoz),
       jedalnylistok: menu.ibaOnline(jedalnylistok),
       alergeny: menu.ALERGENY,
+      hodiny: hodiny.stav(),
       ...(await menu.spolocne()),
     });
   } catch (e) {
-    console.error('Menu sa nepodarilo poskladať:', e);
-    return res.status(500).json({ ok: false, error: 'Menu sa nepodarilo načítať' });
+    console.error('Menu sa nepodarilo poskladať:', e.message);   // H1
+    return res.status(503).json({ ok: false, error: 'Ponuku sa nepodarilo načítať.' });
   }
 };

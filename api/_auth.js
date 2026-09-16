@@ -12,8 +12,15 @@
 const crypto = require('crypto');
 const store = require('./_store');
 
-const MENO = process.env.ADMIN_USER || 'adminvila27';
-const HESLO = process.env.ADMIN_PASS || 'adminvila27';
+/**
+ * Bez nastavených premenných sa neprihlási nikto (fail closed, B1).
+ * Predtým tu boli zapísané testovacie údaje – tie by na ostrom serveri
+ * boli otvorenými dverami do správy ponuky.
+ */
+const MENO = process.env.ADMIN_USER || '';
+const HESLO = process.env.ADMIN_PASS || '';
+const MIN_HESLO = 12;
+const nastavene = () => MENO.length >= 3 && HESLO.length >= MIN_HESLO;
 
 const COOKIE = 'vila27_sprava';
 const PLATNOST = 20 * 60;                 // 20 minút nečinnosti a sedenie padá
@@ -27,6 +34,7 @@ function rovnake(a, b) {
 }
 
 function overUdaje(meno, heslo) {
+  if (!nastavene()) return false;            // nenastavený server neprihlasuje nikoho
   const menoOk = rovnake(meno, MENO);
   const hesloOk = rovnake(heslo, HESLO);
   return menoOk && hesloOk;                // obe sa počítajú vždy, bez skratky
@@ -100,4 +108,4 @@ async function straz(req, res) {
   return sedenie;
 }
 
-module.exports = { COOKIE, PLATNOST, overUdaje, zaloz, platne, zrus, straz, bezCache, zmazCookie };
+module.exports = { COOKIE, PLATNOST, nastavene, MIN_HESLO, overUdaje, zaloz, platne, zrus, straz, bezCache, zmazCookie };

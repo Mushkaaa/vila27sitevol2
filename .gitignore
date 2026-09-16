@@ -1,0 +1,24 @@
+# --- tajomstvá a lokálna konfigurácia ---
+.env
+.env.*
+!.env.example
+agent/config.json
+agent/*.local.json
+
+# --- lokálne dáta tlačového agenta ---
+agent/vytlacene.json
+agent/agent.log
+agent/*.log
+agent/tlac/
+
+# --- logy a dočasné súbory ---
+*.log
+npm-debug.log*
+.tmp/
+tmp/
+
+# --- nástroje ---
+node_modules/
+.vercel/
+.DS_Store
+Thumbs.db

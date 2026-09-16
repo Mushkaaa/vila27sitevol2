@@ -1,6 +1,6 @@
 {
-  "apiUrl": "https://vila27.vercel.app",
-  "token": "TU_DAJ_TAJNY_TOKEN_ROVNAKY_AKO_NA_VERCELI",
+  "apiUrl": "https://__DOPLNIT__.vercel.app",
+  "token": "__TOKEN_ROVNAKY_AKO_PRINT_TOKEN_NA_VERCELI__",
   "pollSeconds": 5,
 
   "printer": {
