@@ -1,9 +1,9 @@
 {
   "apiUrl": "https://__DOPLNIT__.vercel.app",
   "token": "__TOKEN_ROVNAKY_AKO_PRINT_TOKEN_NA_VERCELI__",
-  "pollSeconds": 5,
-  "idlePollSeconds": 15,
-  "closedPollSeconds": 300,
+  "pollSeconds": 12,
+  "idlePollSeconds": 40,
+  "closedPollSeconds": 900,
   "hodiny": {
     "od": "10:30",
     "do": "22:00"

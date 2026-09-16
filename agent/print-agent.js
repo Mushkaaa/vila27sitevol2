@@ -37,17 +37,19 @@ const TIMEOUT_MS = Number(CFG.timeoutMs) || 10000;          // D4
 const MAX_CAKANIE_MS = 5 * 60 * 1000;
 
 /* ---- D3: koľko sa smie pýtať servera ----
-   Pýtať sa každých 5 s nonstop = 17 280 volaní denne (~518 000 mesačne).
-   To je polovica mesačného limitu Vercel Hobby a trojnásobok mesačného
-   limitu Upstash Free (500 000 príkazov). Preto:
-     • mimo otváracích hodín sa agent pýta len raz za pár minút,
-     • keď je fronta chvíľu prázdna, spomalí na pokojný interval.
-   Čísla a prepočet sú v docs/security/REPORT.md, časť D3. */
+   Bezplatný Upstash dáva 500 000 príkazov mesačne a delíme sa oň s nástenkou
+   v kuchyni. Preto sa agent pýta troma spôsobmi:
+     • otázka „zmenilo sa niečo?“ posiela naposledy videnú verziu fronty a
+       server na ňu odpovie JEDNÝM Redis príkazom (predtým to boli tri),
+     • keď je chvíľu ticho, interval sa predĺži,
+     • mimo otváracích hodín sa pýta len raz za štvrťhodinu.
+   Namerané čísla sú v docs/security/REPORT.md, časť D3, a stráži ich
+   test tests/kvoty.test.js. */
 const HODINY = CFG.hodiny || { od: '10:30', do: '22:00' };
-const POLL_RUSNO = Number(CFG.pollSeconds) || 5;
-const POLL_POKOJ = Number(CFG.idlePollSeconds) || 15;
-const POLL_ZATVORENE = Number(CFG.closedPollSeconds) || 300;
-const PRAZDNYCH_NA_POKOJ = 12;          // ~1 minúta ticha a spomalíme
+const POLL_RUSNO = Number(CFG.pollSeconds) || 12;
+const POLL_POKOJ = Number(CFG.idlePollSeconds) || 40;
+const POLL_ZATVORENE = Number(CFG.closedPollSeconds) || 900;
+const PRAZDNYCH_NA_POKOJ = 6;           // ~1 minúta ticha a spomalíme
 
 const naMinuty = hhmm => { const [h, m] = String(hhmm).split(':').map(Number); return h * 60 + m; };
 
@@ -165,8 +167,21 @@ async function printOrder(order, copyLabel = '') {
   return print(data, CFG.printer);
 }
 
+/* Posledná videná verzia fronty. null = spýtaj sa naplno.
+   Po neúspešnej tlači ju zámerne zahodíme, inak by server odpovedal
+   „nezmenené“ a objednávka by sa už nikdy nevytlačila. */
+let poslednaVerzia = null;
+
 async function tick() {
-  const { orders = [] } = await fetchJson(api('/api/queue'));
+  const otazka = poslednaVerzia === null
+    ? '/api/queue'
+    : `/api/queue?v=${encodeURIComponent(poslednaVerzia)}`;
+  const odpoved = await fetchJson(api(otazka));
+
+  if (typeof odpoved.v === 'number') poslednaVerzia = odpoved.v;
+  if (odpoved.nezmenene) { prazdnychZasebou++; return; }
+
+  const { orders = [] } = odpoved;
   if (!orders.length) { prazdnychZasebou++; return; }
   prazdnychZasebou = 0;
 
@@ -181,6 +196,9 @@ async function tick() {
       done.push(order.id);
       log(`✓ Vytlačená objednávka #${order.number}`);       // E2 – bez mena a telefónu v logu
     } catch (e) {
+      // ďalší dotaz musí byť plný, inak by sa na nevytlačenú objednávku zabudlo
+      poslednaVerzia = null;
+      prazdnychZasebou = 0;
       log(`✗ CHYBA TLAČE objednávky #${order.number}: ${e.message} (skúsim znova o chvíľu)`);
     }
   }
@@ -195,7 +213,7 @@ async function tick() {
 }
 
 async function reprint(number) {
-  const { orders = [] } = await fetchJson(api('/api/queue?all=1'));
+  const { orders = [] } = await fetchJson(api('/api/queue?all=1'));   // dotlač sa vždy pýta naplno
   const order = orders.find(o => String(o.number) === String(number));
   if (!order) { log(`Objednávku #${number} som nenašiel.`); process.exit(1); }
   await printOrder(order, 'KÓPIA');
@@ -226,6 +244,7 @@ async function main() {
       cakaj = dalsiInterval();
     } catch (e) {
       failStreak++;
+      poslednaVerzia = null;                 // po výpadku radšej plný dotaz
       // D4 – pri výpadku sa interval zdvojnásobuje, aby agent server nebil
       cakaj = Math.min(POLL_RUSNO * 1000 * 2 ** Math.min(failStreak, 8), MAX_CAKANIE_MS);
       if (failStreak === 1 || failStreak % 10 === 0) {

@@ -23,6 +23,7 @@ const ORDER = id => `vila27:objednavka:${id}`;
 const PRINTED = 'vila27:vytlacene';
 const DONE = 'vila27:hotove';
 const COUNTER = 'vila27:pocitadlo';
+const VERZIA = 'vila27:verzia';
 const MAX = 200;
 
 const TIMEOUT_MS = Number(process.env.REDIS_TIMEOUT_MS) || 5000;      // D4
@@ -148,10 +149,29 @@ const store = {
     return (await redis('LRANGE', key, 0, limit - 1)) || [];
   },
 
+  /**
+   * Verzia fronty (D3). Pri každej zmene sa zvýši o jedna, takže sa agent aj
+   * nástenka vedia jedným GETom spýtať „zmenilo sa niečo?“ namiesto toho, aby
+   * zakaždým ťahali celý zoznam. Jeden príkaz namiesto troch až štyroch —
+   * a práve prázdnych otázok je drvivá väčšina.
+   */
+  async verzia() {
+    if (!hasRedis) return mem.verzia || 0;
+    return Number(await redis('GET', VERZIA)) || 0;
+  },
+
+  async zvysVerziu() {
+    if (!hasRedis) { mem.verzia = (mem.verzia || 0) + 1; return mem.verzia; }
+    const n = Number(await redis('INCR', VERZIA));
+    if (n === 1) await redis('EXPIRE', VERZIA, String(ROK));   // expirácia stačí raz
+    return n;
+  },
+
   async nextNumber() {
     if (!hasRedis) return ++mem.counter;
     const n = Number(await redis('INCR', COUNTER));
-    await redis('EXPIRE', COUNTER, String(ROK));      // žiadny kľúč bez expirácie (E1)
+    // expirácia sa nastavuje len pri prvom čísle, nie pri každej objednávke (E1 + D3)
+    if (n === 1) await redis('EXPIRE', COUNTER, String(ROK));
     return n;
   },
 
@@ -162,12 +182,14 @@ const store = {
       mem.orders.set(order.id, { val: order, do: Date.now() + ttl * 1000 });
       mem.index.unshift(order.id);
       mem.index = mem.index.slice(0, MAX);
+      await this.zvysVerziu();
       return;
     }
     await redis('SET', ORDER(order.id), JSON.stringify(order), 'EX', String(ttl));
     await redis('LPUSH', LIST, order.id);
     await redis('LTRIM', LIST, 0, MAX - 1);
     await redis('EXPIRE', LIST, String(ttl));
+    await this.zvysVerziu();
   },
 
   async list(limit = 60) {
@@ -181,7 +203,8 @@ const store = {
     }
     const ids = (await redis('LRANGE', LIST, 0, limit - 1)) || [];
     if (!ids.length) return [];
-    const rows = (await redis('MGET', ...ids)) || [];
+    // zoznam drží holé ID, dáta sú pod kľúčom s predponou – MGET musí dostať kľúče
+    const rows = (await redis('MGET', ...ids.map(ORDER))) || [];
     return rows
       .map(r => { try { return r ? JSON.parse(r) : null; } catch { return null; } })
       .filter(Boolean);
@@ -195,9 +218,10 @@ const store = {
 
   async markPrinted(ids) {
     if (!ids.length) return;
-    if (!hasRedis) { ids.forEach(i => mem.printed.add(i)); return; }
+    if (!hasRedis) { ids.forEach(i => mem.printed.add(i)); await this.zvysVerziu(); return; }
     await redis('SADD', PRINTED, ...ids);
     await redis('EXPIRE', PRINTED, String(ttlSekundy()));
+    await this.zvysVerziu();
   },
 
   // ---- vybavené objednávky (označuje obsluha na nástenke) ----
@@ -209,9 +233,10 @@ const store = {
 
   async markDone(ids, hotove) {
     if (!ids.length) return;
-    if (!hasRedis) { ids.forEach(i => hotove ? mem.done.add(i) : mem.done.delete(i)); return; }
+    if (!hasRedis) { ids.forEach(i => hotove ? mem.done.add(i) : mem.done.delete(i)); await this.zvysVerziu(); return; }
     await redis(hotove ? 'SADD' : 'SREM', DONE, ...ids);
     await redis('EXPIRE', DONE, String(ttlSekundy()));
+    await this.zvysVerziu();
   },
 };
 

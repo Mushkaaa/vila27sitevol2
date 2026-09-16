@@ -14,6 +14,15 @@ let unack = new Set();           // nové, ktoré obsluha ešte nepotvrdila
 let filter = localStorage.getItem(FKEY) || "vsetky";   // nič sa neskrýva, kým si obsluha nevyberie
 let soundOn = false, notifOn = false, first = true, titleT = null, actx = null;
 
+/* D3 – ako často sa pýtať. Pri zmenách rýchlo, po chvíli ticha pomalšie.
+   Namerané v tests/kvoty.test.js, vysvetlené v docs/security/REPORT.md časť D3. */
+const POLL_RUSNO_MS = 20000;
+const POLL_POKOJ_MS = 60000;
+const TICHYCH_NA_POKOJ = 4;            // ~1 minúta bez zmeny a spomalíme
+let poslednaVerzia = null;
+let tichychZasebou = 0;
+let obnovovanie = null;
+
 const eur = n => (Number(n) || 0).toFixed(2).replace(".", ",") + " €";
 const cas = iso => { const d = new Date(iso), p = n => String(n).padStart(2, "0"); return `${p(d.getHours())}:${p(d.getMinutes())}`; };
 
@@ -163,9 +172,25 @@ function oznam(text){
 /* ---------- načítanie ---------- */
 async function load(){
   try{
-    const res = await fetch("/api/queue?all=1", { headers: hlavicky(), cache: "no-store" });
+    // D3 – ak sa od minule nič nezmenilo, server odpovie jedným Redis príkazom
+    // namiesto štyroch. Nástenka beží v kuchyni celý deň, takže práve toto
+    // rozhoduje o tom, či sa zmestíme do bezplatného limitu Upstashu.
+    const adresa = poslednaVerzia === null
+      ? "/api/queue?all=1"
+      : "/api/queue?all=1&v=" + encodeURIComponent(poslednaVerzia);
+    const res = await fetch(adresa, { headers: hlavicky(), cache: "no-store" });
     if (res.status === 401){ logout("Prístupový kód neplatí."); return; }
     const data = await res.json();
+    if (typeof data.v === "number") poslednaVerzia = data.v;
+
+    if (data.nezmenene){
+      tichychZasebou++;
+      $("#liveBox").classList.remove("off");
+      $("#live").textContent = "obnovené " + new Date().toLocaleTimeString("sk-SK");
+      return;
+    }
+    tichychZasebou = 0;
+
     orders = data.orders || [];
     printed = new Set(data.printed || []);
     hotove = new Set(data.hotove || []);
@@ -201,7 +226,10 @@ async function oznacHotove(id, hotova){
     if (res.status === 401){ logout("Prístupový kód neplatí."); return; }
     if (hotova) hotove.add(id); else hotove.delete(id);
     unack.delete(id);
+    poslednaVerzia = null;          // vlastnú zmenu si necháme potvrdiť plným dotazom
+    tichychZasebou = 0;
     refreshAlert(); draw();
+    naplanujObnovu();
 
     const o = orders.find(x => x.id === id);
     const cislo = o ? "#" + o.number : "Objednávka";
@@ -215,6 +243,8 @@ async function oznacHotove(id, hotova){
 
 function logout(msg){
   sessionStorage.removeItem(KEY); token = "";
+  clearTimeout(obnovovanie); obnovovanie = null;
+  poslednaVerzia = null; tichychZasebou = 0;
   orders = []; seen = new Set(); printed = new Set(); hotove = new Set(); first = true;
   clearAlert();
   $("#app").hidden = true; $("#gate").hidden = false; $("#err").textContent = msg || "";
@@ -227,7 +257,7 @@ $("#enter").addEventListener("click", () => {
   sessionStorage.setItem(KEY, v); token = v;
   $("#gate").hidden = true; $("#app").hidden = false;
   askPermission();
-  load();
+  load().then(naplanujObnovu);
 });
 $("#tok").addEventListener("keydown", e => { if (e.key === "Enter") $("#enter").click(); });
 $("#logout").addEventListener("click", () => logout());
@@ -298,9 +328,23 @@ paintNotif();
 if (token){
   $("#app").hidden = false;
   askPermission(); armPermissionAsk();
-  load();
+  load().then(naplanujObnovu);
 } else {
   $("#gate").hidden = false;
 }
-setInterval(() => { if (token && !$("#app").hidden) load(); }, 5000);
+/* Namiesto pevného intervalu sa ďalšie načítanie plánuje až po tom
+   predchádzajúcom – pomalé spojenie tak dotazy nehromadí. */
+function naplanujObnovu(){
+  clearTimeout(obnovovanie);
+  if (!token || $("#app").hidden) return;
+  const o = tichychZasebou >= TICHYCH_NA_POKOJ ? POLL_POKOJ_MS : POLL_RUSNO_MS;
+  obnovovanie = setTimeout(async () => { await load(); naplanujObnovu(); }, o);
+}
+
+// prepočet „pred X minútami“ je čisto lokálny, Redis sa ho netýka
 setInterval(() => { if (token && !$("#app").hidden && orders.length) draw(); }, 30000);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { clearTimeout(obnovovanie); obnovovanie = null; }
+  else if (token && !$("#app").hidden) { load().then(naplanujObnovu); }
+});

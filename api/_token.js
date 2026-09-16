@@ -64,23 +64,30 @@ async function straz(req, res) {
     return false;
   }
 
+  /* Správny token sa overí bez jediného dotazu do Redisu (D3).
+     Počítadlo neúspechov sa číta aj zapisuje IBA na chybovej ceste. Má to dva
+     dôvody:
+       – tlačový agent a nástenka sa pýtajú celý deň; jeden GET navyše pri
+         každej otázke bol polovicou celej mesačnej spotreby,
+       – a hlavne: keby limit platil aj pre správny token, stačilo by poslať
+         desať nesprávnych z tej istej IP (napr. cez rovnaké NAT ako
+         reštaurácia) a tlač objednávok by stála štvrť hodiny. Uhádnuť
+         32-znakový náhodný token sa aj tak nedá, throttling je tu proti
+         hluku, nie ako jediná obrana. */
+  if (overToken(zHlavicky(req))) return true;
+
   const ip = klientskaIp(req);
-  let zlych = 0;
-  try { zlych = Number(await store.get(KLUC_POKUS(ip))) || 0; } catch { zlych = 0; }
-  if (zlych >= POKUSY_LIMIT) {
+  let zlych = 1;
+  try { zlych = await store.pocitadlo(KLUC_POKUS(ip), POKUSY_OKNO); } catch { zlych = 1; }
+
+  if (zlych > POKUSY_LIMIT) {
     res.setHeader('Retry-After', String(POKUSY_OKNO));
     res.status(429).json({ ok: false, error: 'Priveľa pokusov. Skúste to neskôr.' });
     return false;
   }
 
-  if (!overToken(zHlavicky(req))) {
-    // počíta sa len neúspech – agent, ktorý sa pýta správne, si limit nemíňa
-    try { await store.pocitadlo(KLUC_POKUS(ip), POKUSY_OKNO); } catch { /* nevadí */ }
-    res.status(401).json({ ok: false, error: 'Neplatný token' });
-    return false;
-  }
-
-  return true;
+  res.status(401).json({ ok: false, error: 'Neplatný token' });
+  return false;
 }
 
 module.exports = { straz, overToken, tokenNastaveny, zHlavicky, MIN_DLZKA, POKUSY_LIMIT, POKUSY_OKNO };

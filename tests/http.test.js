@@ -504,9 +504,29 @@ test('B5 – opakované zlé pokusy o token z jednej IP skončia na 429', async 
   });
   assert.equal(ina.status, 200, 'limit zablokoval aj nevinnú IP');
 
-  // a zablokovaná IP neprejde ani so správnym tokenom, kým okno nevyprší
-  const blokovana = await fetch(A + '/api/queue', {
+  /* Správny token prejde aj z IP, ktorá má za sebou neúspešné pokusy. Je to
+     zámer, nie medzera: uhádnuť 32-znakový náhodný token sa nedá, ale keby
+     limit platil aj pre správny token, stačilo by poslať desať nesprávnych
+     z tej istej IP (kuchyňa aj útočník bývajú za spoločným NAT) a tlač
+     objednávok by stála štvrť hodiny. Throttling je tu proti hluku. */
+  const spravny = await fetch(A + '/api/queue', {
     headers: { Authorization: 'Bearer ' + TOKEN, 'x-forwarded-for': ip },
   });
-  assert.equal(blokovana.status, 429);
+  assert.equal(spravny.status, 200, 'zlé pokusy cudzieho nesmú odstaviť tlačového agenta');
+
+  // ďalší nesprávny pokus z tej istej IP je stále zastavený
+  const dalsiZly = await fetch(A + '/api/queue', { headers: zly });
+  assert.equal(dalsiZly.status, 429, 'limit prestal platiť po úspešnom prihlásení');
+});
+
+test('B5/D3 – overenie správneho tokenu nestojí ani jeden dotaz do úložiska', async () => {
+  // Agent aj nástenka sa pýtajú celý deň. Keby každé overenie znamenalo čítanie
+  // počítadla, minulo by to polovicu mesačného limitu Upstashu (pozri kvoty.test.js).
+  const kod = fs.readFileSync(path.join(KOREN, 'api', '_token.js'), 'utf8');
+  const telo = kod.slice(kod.indexOf('async function straz'));
+  const uspech = telo.slice(0, telo.indexOf('const ip = klientskaIp'));
+  assert.ok(/if \(overToken\(zHlavicky\(req\)\)\) return true;/.test(uspech),
+    'úspešná cesta sa už neukončuje pred prácou s počítadlom');
+  assert.ok(!/store\.(get|pocitadlo|set)/.test(uspech),
+    'na úspešnej ceste pribudol dotaz do úložiska');
 });

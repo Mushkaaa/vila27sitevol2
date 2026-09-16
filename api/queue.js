@@ -28,6 +28,18 @@ module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') {
       const all = req.query && (req.query.all === '1' || req.query.all === 'true');
+
+      /* D3 – lacná otázka „zmenilo sa niečo?“.
+         Klient pošle verziu, ktorú naposledy videl. Ak sedí, odpovieme jedným
+         Redis príkazom namiesto štyroch a bez tela. Drvivá väčšina otázok je
+         práve taká, takže to rozhoduje o tom, či sa zmestíme do bezplatného
+         limitu Upstashu. Klient bez `v` dostane plnú odpoveď ako predtým. */
+      const v = await store.verzia();
+      const znama = Number(req.query && req.query.v);
+      if (Number.isInteger(znama) && znama === v) {
+        return res.status(200).json({ ok: true, v, nezmenene: true, orders: [] });
+      }
+
       const orders = await store.list(60);
       const printed = await store.printedIds();
 
@@ -36,13 +48,14 @@ module.exports = async (req, res) => {
         const su = new Set(orders.map(o => o.id));
         return res.status(200).json({
           ok: true,
+          v,
           orders,
           printed: [...printed].filter(id => su.has(id)),
           hotove: [...hotove].filter(id => su.has(id)),
         });
       }
 
-      return res.status(200).json({ ok: true, orders: orders.filter(o => !printed.has(o.id)) });
+      return res.status(200).json({ ok: true, v, orders: orders.filter(o => !printed.has(o.id)) });
     }
 
     let body;

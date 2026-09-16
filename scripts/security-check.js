@@ -181,6 +181,7 @@ const POPISY = {
   C9: 'Kontrola rovnakého pôvodu',
   D1: 'Limity na IP aj celkovo',
   D2: 'Pamäťový režim zakázaný v produkcii',
+  D3: 'Dotazovanie sa zmestí do bezplatného Upstashu',
   D4: 'Timeouty a exponenciálne čakanie',
   E1: 'Expirácia osobných údajov (ORDER_TTL_DAYS)',
   E2: 'V logoch nie sú osobné údaje',
@@ -214,7 +215,6 @@ const POPISY = {
 
 /** Položky, ktoré sa dajú overiť iba prečítaním – patria do REPORT.md. */
 const BEZ_TESTU = {
-  D3: 'Poller agenta vs. limity Vercel Hobby a Upstash – prepočet je v REPORT.md',
   G5: 'Integrita cudzích skriptov – stránka žiadny cudzí skript nenačítava (overuje F1/F2)',
   K: 'Ďalšie nálezy z prieskumu – zoznam je v REPORT.md',
 };
