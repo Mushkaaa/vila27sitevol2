@@ -36,10 +36,31 @@ function ttlSekundy() {
 }
 
 const hasRedis = Boolean(URL_ENV && TOKEN_ENV);
-const jeProdukcia = process.env.VERCEL_ENV === 'production';
 
-/** V produkcii bez Redisu nemá zmysel čokoľvek predstierať. */
-const pamatovyRezimPovoleny = !jeProdukcia;
+/**
+ * Pamäťový režim (D2) sa zapína VÝSLOVNE, nie odhadom podľa prostredia.
+ *
+ * Predtým sa tu pozeralo na `VERCEL_ENV === 'production'`. To fungovalo presne
+ * na jednom hostingu: všade inde je tá premenná prázdna, takže sa pamäťový
+ * režim potichu povolil a objednávky by pri chýbajúcom Redise mizli do vzduchu
+ * – a zákazník by aj tak videl „prijaté“. Zlyhanie smerom von, bez jediného
+ * varovania. Teraz je to naopak: kto chce pamäťový režim, musí si oň povedať.
+ *
+ * Lokálny vývoj si ho zapína v dev-server.js, testy v prostredí testu.
+ */
+const pamatovyRezimPovoleny = process.env.VILA27_ALLOW_MEMORY_STORE === '1';
+
+/** Len na informáciu do logu a do /api/queue; na rozhodovanie sa nepoužíva. */
+const jeProdukcia = process.env.VERCEL_ENV === 'production'
+  || process.env.NODE_ENV === 'production'
+  || process.env.VILA27_ENV === 'production';
+
+if (!hasRedis && !pamatovyRezimPovoleny) {
+  console.error(
+    'Úložisko nie je nastavené: chýba KV_REST_API_URL/KV_REST_API_TOKEN. '
+    + 'Objednávky budú odmietané s 503. Na lokálny beh bez Redisu nastav VILA27_ALLOW_MEMORY_STORE=1.',
+  );
+}
 
 async function redis(...cmd) {
   const res = await fetch(URL_ENV, {

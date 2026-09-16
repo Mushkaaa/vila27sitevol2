@@ -47,6 +47,8 @@ test.before(async () => {
       ...process.env,
       PORT: String(PORT_WEB),
       PRINT_TOKEN: TOKEN,
+      // testy si posielajú vlastnú IP – hosting to robí prepísaním tejto hlavičky
+      VILA27_IP_HEADER: 'x-forwarded-for',
       ADMIN_USER: 'test',
       ADMIN_PASS: 'testovacie-heslo-12',
       VILA27_HOURS_FILE: path.join(__dirname, 'fixtures', 'hodiny-otvorene.json'),

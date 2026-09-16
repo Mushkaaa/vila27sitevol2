@@ -594,11 +594,33 @@ test('E1 – objednávky sa ukladajú s expiráciou podľa ORDER_TTL_DAYS', () =
   assert.match(kod, /redis\('EXPIRE', PRINTED/);
 });
 
-test('D2 – pamäťový režim je v produkcii zakázaný', () => {
+test('D2 – pamäťový režim sa zapína výslovne, nie odhadom podľa hostingu', () => {
   const kod = fs.readFileSync(path.join(KOREN, 'api', '_store.js'), 'utf8');
-  assert.match(kod, /VERCEL_ENV === 'production'/);
-  assert.match(kod, /pamatovyRezimPovoleny = !jeProdukcia/);
+  // rozhodnutie nesmie visieť na premennej, ktorú nastavuje jeden konkrétny hosting
+  assert.match(kod, /pamatovyRezimPovoleny = process\.env\.VILA27_ALLOW_MEMORY_STORE === '1'/);
+  assert.ok(!/pamatovyRezimPovoleny = !jeProdukcia/.test(kod),
+    'povolenie pamäťového režimu sa zase odvodzuje od prostredia');
   assert.match(kod, /e\.nedostupne = true/);
+
+  /* A hlavne: overme to správanie, nie iba text. Modul sa načíta nanovo
+     v prostredí „cudzí hosting, Redis nenastavený“ – musí odmietnuť, nie
+     ticho zapisovať do pamäte. Presne toto bolo predtým fail-open. */
+  const { execFileSync } = require('node:child_process');
+  const skript = `
+    delete process.env.VERCEL_ENV;
+    delete process.env.NODE_ENV;
+    delete process.env.VILA27_ALLOW_MEMORY_STORE;
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_REST_API_TOKEN;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    const s = require(${JSON.stringify(path.join(KOREN, 'api', '_store.js'))});
+    try { s.skontrolujDostupnost(); console.log('FAIL-OPEN'); }
+    catch (e) { console.log(e.nedostupne ? 'ODMIETNUTE' : 'INA-CHYBA'); }
+  `;
+  const vysledok = execFileSync(process.execPath, ['-e', skript], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  assert.equal(vysledok.trim(), 'ODMIETNUTE',
+    'na hostingu bez Redisu a bez výslovného povolenia by sa objednávky stratili');
 });
 
 test('D4 – každé volanie von má timeout', () => {

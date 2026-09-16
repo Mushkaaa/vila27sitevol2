@@ -63,7 +63,10 @@ Nikde nie je `Access-Control-Allow-Origin` — všetko je same-origin.
 | `REDIS_TIMEOUT_MS` | `api/_store.js` | nie (5000) | |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | `api/orders.js` | nie | bez nich je overenie vypnuté |
 | `VILA27_HOURS_FILE` | `api/_hours.js` | nie | iná konfigurácia hodín (testy) |
-| `VERCEL_ENV` | `api/_store.js` | nastavuje Vercel | `production` zakáže pamäťový režim |
+| `VILA27_IP_HEADER` | `api/_ip.js` | **podľa hostingu** | názov hlavičky s IP klienta, ktorú proxy prepisuje; bez nej sa použije adresa spojenia (viď REPORT.md 7.3) |
+| `VILA27_ALLOW_MEMORY_STORE` | `api/_store.js` | nie – v produkcii **nenastavovať** | `1` povolí pamäťový režim bez Redisu; inak sa vráti 503 |
+| `MENU_CACHE_MS` | `api/menu.js` | nie (300 000) | ako dlho sa ponuka drží v pamäti inštancie (D3) |
+| `VERCEL_ENV` / `NODE_ENV` | `api/_store.js` | nie | už len informatívne, na rozhodovanie sa nepoužíva |
 | `VILA27_TOKEN` | `agent/print-agent.js` | odporúčané | token agenta z prostredia namiesto configu |
 
 Vzory bez hodnôt: `.env.example`, `agent/config.example.json`.

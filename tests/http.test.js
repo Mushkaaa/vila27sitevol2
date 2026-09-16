@@ -30,6 +30,8 @@ async function server(env = {}, port) {
       ...process.env,
       PORT: String(port),
       PRINT_TOKEN: TOKEN,
+      // testy si posielajú vlastnú IP – hosting to robí prepísaním tejto hlavičky
+      VILA27_IP_HEADER: 'x-forwarded-for',
       ADMIN_USER: 'test',
       ADMIN_PASS: 'testovacie-heslo-12',
       VILA27_HOURS_FILE: FIX('hodiny-otvorene.json'),
@@ -51,12 +53,14 @@ async function server(env = {}, port) {
   throw new Error('dev-server sa nerozbehol na porte ' + port);
 }
 
-let A, B, C;
+let A, B, C, D;
 
 test.before(async () => {
   A = process.env.BASE_URL || await server({ ORDER_GLOBAL_LIMIT: '200' }, 3101);
   B = await server({ VILA27_HOURS_FILE: FIX('hodiny-zatvorene.json') }, 3102);
   C = await server({ ORDER_GLOBAL_LIMIT: '3' }, 3103);
+  // hosting BEZ dôveryhodnej proxy – hlavičke s IP sa nesmie veriť
+  D = await server({ VILA27_IP_HEADER: '', ORDER_GLOBAL_LIMIT: '200' }, 3104);
 });
 
 test.after(() => servery.forEach(p => { try { p.kill(); } catch { /* už padol */ } }));
@@ -529,4 +533,52 @@ test('B5/D3 – overenie správneho tokenu nestojí ani jeden dotaz do úložisk
     'úspešná cesta sa už neukončuje pred prácou s počítadlom');
   assert.ok(!/store\.(get|pocitadlo|set)/.test(uspech),
     'na úspešnej ceste pribudol dotaz do úložiska');
+});
+
+/* ==================================================================== D1 */
+
+test('D1 – bez nastavenej dôveryhodnej hlavičky sa podvrhnutá IP limit neobíde', async () => {
+  /* Server D beží tak, ako keby bol na hostingu bez proxy, ktorá by hlavičku
+     prepisovala. Útočník mení x-forwarded-for pri každej požiadavke; keby sme
+     jej verili, mal by zakaždým čistý limit a obmedzenie 5 objednávok / 10 minút
+     by neznamenalo nič. Všetky požiadavky prídu z rovnakého soketu, takže sa
+     musia počítať do jedného vedra. */
+  const stavy = [];
+  for (let i = 0; i < 7; i++) {
+    const r = await fetch(D + '/api/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': `192.0.2.${i + 1}` },
+      body: JSON.stringify(objednavka()),
+    });
+    stavy.push(r.status);
+    await r.body?.cancel?.();
+  }
+  assert.ok(stavy.includes(429), `podvrhnutá IP obišla limit: ${stavy.join(', ')}`);
+  assert.equal(stavy[5], 429, 'šiesta objednávka mala naraziť na limit aj pri meniacej sa hlavičke');
+});
+
+test('D1 – hlavička s IP platí len vtedy, keď je výslovne pomenovaná', async () => {
+  /* Rovnaké dve požiadavky, dva servery. Na A je VILA27_IP_HEADER nastavená,
+     takže sa rôzne IP počítajú zvlášť; na D nastavená nie je, takže sa
+     podvrhnutá hlavička ignoruje a obe padnú do jedného vedra. Rozdiel medzi
+     nimi je presne to, čo tá premenná znamená. */
+  const posliNa = (base, ip) => fetch(base + '/api/orders', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': ip },
+    body: JSON.stringify(objednavka()),
+  });
+
+  // A: dve čerstvé, navzájom nesúvisiace IP – obe prejdú
+  const a1 = await posliNa(A, novaIp());
+  const a2 = await posliNa(A, novaIp());
+  assert.equal(a1.status, 201);
+  assert.equal(a2.status, 201, 'nastavená hlavička sa neberie do úvahy');
+  await a1.body?.cancel?.(); await a2.body?.cancel?.();
+
+  // D: limit je už vyčerpaný z predchádzajúceho testu a nová „IP“ ho neobnoví
+  const d1 = await posliNa(D, '192.0.2.250');
+  assert.equal(d1.status, 429, 'podvrhnutá hlavička vyrobila nové vedro');
+  await d1.body?.cancel?.();
+
+  assert.match(fs.readFileSync(path.join(KOREN, 'api', '_ip.js'), 'utf8'), /process\.env\.VILA27_IP_HEADER/);
 });

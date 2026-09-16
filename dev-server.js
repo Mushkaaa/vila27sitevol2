@@ -25,6 +25,8 @@ const WEB = path.join(ROOT, 'public');
 process.env.PRINT_TOKEN ||= 'lokalny-vyvojovy-token-0123456789abcdef';
 process.env.ADMIN_USER ||= 'vyvoj';
 process.env.ADMIN_PASS ||= 'lokalne-heslo-na-vyvoj';
+// Bez Upstashu drží objednávky v pamäti – výslovné povolenie, nie odhad (D2).
+process.env.VILA27_ALLOW_MEMORY_STORE ||= '1';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',

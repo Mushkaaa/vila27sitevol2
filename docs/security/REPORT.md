@@ -9,7 +9,7 @@ Podklady: [`inventory.md`](inventory.md) (obhliadka) a [`research.md`](research.
 
 ## 1. Ako to dopadlo
 
-`npm run security:check` — **82 automatických kontrol, všetky prešli, návratový kód 0.**
+`npm run security:check` — **89 automatických kontrol, všetky prešli, návratový kód 0.**
 Sken tajomstiev prešiel pracovný strom aj celú históriu gitu: **žiadny skutočný token
 tam nikdy nebol**, iba názvy premenných a zástupné texty.
 
@@ -64,9 +64,9 @@ Legenda: **Opravené** = zmenil sa kód · **Už v poriadku** = bolo správne aj
 
 | ID | Stav | Dôkaz |
 |---|---|---|
-| D1 | **Opravené** | 5 objednávok / 10 min na IP a 60 / hod celkovo → 429 s priateľskou slovenskou hláškou a `Retry-After` ([`api/orders.js:28-31`, `225-240`](../../api/orders.js)). IP z hlavičky, ktorú prepisuje Vercel, predpoklad zapísaný v [`api/_ip.js`](../../api/_ip.js). Testy `D1 – šiesta objednávka…`, `D1 – celkový strop…`, `D1 – počítadlo limitov…`. |
-| D2 | **Opravené** | [`api/_store.js:36-41`, `74-81`](../../api/_store.js): pri `VERCEL_ENV=production` bez Redisu sa vyhodí chyba a `/api/orders` vráti 503 s textom *„Objednávky sú dočasne nedostupné, zavolajte nám, prosím, na +421 914 271 271.“* Pamäťový režim ostáva len lokálne. Test `D2 – pamäťový režim je v produkcii zakázaný`. |
-| D3 | **Opravené** (čísla nižšie) | [`agent/print-agent.js:39-68`](../../agent/print-agent.js): mimo otváracích hodín 300 s, po minúte ticha 15 s, pri objednávkach 5 s. Prepočet v časti 4. |
+| D1 | **Opravené** | 5 objednávok / 10 min na IP a 60 / hod celkovo → 429 s priateľskou slovenskou hláškou a `Retry-After` ([`api/orders.js:28-31`, `225-240`](../../api/orders.js)). IP sa berie iba z hlavičky pomenovanej v `VILA27_IP_HEADER`, inak z adresy spojenia – podvrhnutou hlavičkou sa limit obísť nedá ([`api/_ip.js`](../../api/_ip.js), viď časť 7.3). Testy `D1 – šiesta objednávka…`, `D1 – celkový strop…`, `D1 – počítadlo limitov…`, `D1 – bez nastavenej dôveryhodnej hlavičky…`, `D1 – hlavička s IP platí len vtedy…`. |
+| D2 | **Opravené** | Pamäťový režim sa zapína výslovne premennou `VILA27_ALLOW_MEMORY_STORE=1`; inak sa bez Redisu vráti 503 s textom *„Objednávky sú dočasne nedostupné, zavolajte nám, prosím, na +421 914 271 271.“* ([`api/_store.js:38-62`](../../api/_store.js)). Predtým to viselo na `VERCEL_ENV`, čo na inom hostingu znamenalo tiché zlyhanie smerom von – podrobnosti v časti 7.1. Testy `D2 – pamäťový režim sa zapína výslovne…`, `D2 – objednávka uložená do Redisu sa naozaj vráti vo fronte`. |
+| D3 | **Opravené a zmerané** | Fronta má verziu, takže prázdna otázka stojí jeden Redis príkaz namiesto štyroch ([`api/queue.js:31-44`](../../api/queue.js), [`api/_store.js:152-168`](../../api/_store.js)). Agent 12/40/900 s ([`agent/print-agent.js:39-68`](../../agent/print-agent.js)), nástenka 20/60 s a pri skrytej karte nič ([`public/admin-objednavky.js:17-23`](../../public/admin-objednavky.js)), ponuka 5 minút v pamäti ([`api/menu.js:12-21`](../../api/menu.js)). Namerané testami `D3 …` (3×), čísla v časti 4. |
 | D4 | **Opravené** | `AbortSignal.timeout` na Redise ([`api/_store.js:48`](../../api/_store.js)), na Turnstile ([`api/orders.js:135`](../../api/orders.js)) aj v agente ([`agent/print-agent.js:156`](../../agent/print-agent.js)); agent pri výpadku zdvojnásobuje čakanie až na 5 minút. Test `D4 – každé volanie von má timeout`. |
 
 ### E. Osobné údaje
@@ -152,7 +152,7 @@ Legenda: **Opravené** = zmenil sa kód · **Už v poriadku** = bolo správne aj
 A1 – hľadám tajomstvá v pracovnom strome a v histórii gitu…
   Nič. Nájdené boli iba názvy premenných a zástupné texty.
 
-Testov: 82   prešlo: 82   zlyhalo: 0   nálezov tajomstiev: 0
+Testov: 89   prešlo: 89   zlyhalo: 0   nálezov tajomstiev: 0
 VÝSLEDOK: PASS – všetky kontroly prešli.
 ```
 
@@ -163,31 +163,87 @@ skriptu) a **K** (zoznam vyššie).
 
 ---
 
-## 4. D3 — koľko si agent smie dovoliť
+## 4. D3 — zmestíme sa do bezplatného Upstashu?
 
-Zmerané kvóty ([Vercel](https://vercel.com/docs/functions/limitations),
-[Upstash](https://upstash.com/docs/redis/overall/pricing), september 2026):
+Pôvodná verzia tejto správy to počítala od stola a **počítala zle** — nezapočítala
+nástenku v kuchyni, ktorá sa pýtala každých 5 sekúnd po štyroch Redis príkazoch.
+Len ona sama by minula okolo **2 000 000 príkazov mesačne**, teda štvornásobok
+bezplatného limitu. Preto sa to už nepočíta, ale **meria**.
 
-| | Vercel **Hobby** | Upstash **Free** |
+`tests/fake-upstash.js` je maličký Upstash cez REST, ktorý počíta príkazy.
+`tests/kvoty.test.js` cezeň zmeria cenu každého druhu požiadavky a vynásobí ju
+modelom prevádzky. Keď sa priblížime k stropu, test padne.
+
+### Čo sa zmenilo
+
+| Zmena | Prečo |
+|---|---|
+| Fronta má **verziu** (`vila27:verzia`). Klient pošle tú, ktorú videl naposledy; ak sedí, server odpovie jedným `GET` a prázdnym telom. | Drvivá väčšina otázok je prázdnych. Z 3–4 príkazov sa stal jeden. |
+| **Nástenka**: 20 s pri zmenách, 60 s po minúte ticha, pri skrytej karte nepýta nič. | Chýbala v pôvodnom prepočte a bola najväčším žrútom. |
+| **Agent**: 12 s pri objednávkach, 40 s v pokoji, 900 s mimo otváracích hodín. | Bloček je v kuchyni do 12 sekúnd, čo stačí. |
+| **Ponuka** sa drží 5 minút v pamäti inštancie. | Bez CDN stálo každé zobrazenie 6 príkazov. |
+| `EXPIRE` sa nastavuje len pri prvom `INCR`, nie pri každom. | Ušetrí jeden príkaz na objednávku. |
+| Overenie správneho tokenu nesiaha do Redisu vôbec. | Bol to jeden `GET` pri každej otázke agenta aj nástenky — polovica celej spotreby. |
+
+### Namerané jednotkové ceny (Redis príkazov)
+
+| Požiadavka | Predtým | Teraz |
 |---|---|---|
-| mesačne | 1 000 000 volaní funkcií, 1 000 000 edge requestov, 100 GB prenosu | 500 000 príkazov, 256 MB dát |
+| prázdna otázka agenta | 4 | **1** |
+| prázdna otázka nástenky | 5 | **1** |
+| plný dotaz agenta (po zmene) | 4 | 4 |
+| plný dotaz nástenky (po zmene) | 5 | 5 |
+| prijatie objednávky | 15 | 13 |
+| označenie vytlačené / vybavené | 3 | 3 |
+| zobrazenie ponuky (studený cache) | 6 | 6 |
+| zobrazenie ponuky (z cache) | 6 | **0** |
 
-Jeden dotaz agenta = 1 volanie funkcie a **3 príkazy Redisu** (`LRANGE`, `MGET`, `SMEMBERS`).
+### Projekcia na mesiac (31 dní)
 
-| Nastavenie | Dotazov / deň | Volaní funkcií / mesiac | Príkazov Redisu / mesiac | Verdikt |
-|---|---|---|---|---|
-| **Pôvodné: 5 s nonstop** | 17 280 | ~518 000 (**52 % Hobby**) | ~1 555 000 (**311 % Upstash Free**) | Neprijateľné |
-| **Nové, rušný deň** (5 s počas 10:30–22:00, inak 300 s) | 8 442 | ~253 000 (25 %) | ~760 000 (152 %) | Cez Upstash Free |
-| **Nové, bežný deň** (po minúte ticha 15 s) | 2 922 | ~88 000 (9 %) | ~263 000 (**53 %**) | V poriadku |
+Bezplatný Upstash Redis: **500 000 príkazov mesačne** (stav 9/2026).
 
-Záver: samotná zmena intervalu zrazila spotrebu na pätinu a bežná prevádzka sa
-do bezplatných limitov pohodlne zmestí. **Ak by reštaurácia mala objednávky
-prakticky nepretržite celý deň, Upstash Free nestačí** — vtedy stačí zdvihnúť
-`pollSeconds` na 10 alebo prejsť na platený režim Upstash (**NEEDS MARTIN #16**).
-Nastavuje sa v `agent/config.json`: `pollSeconds`, `idlePollSeconds`,
-`closedPollSeconds`, `hodiny`.
+| Scenár | Príkazov / mesiac | Z limitu |
+|---|---|---|
+| **Pesimistický deň** — 150 objednávok, 11,5 h bez jedinej chvíle ticha, 3000 zobrazení ponuky | **382 788** | **76,6 %** |
+| **Bežný deň** — 50 objednávok, dlhé obdobia ticha | **141 143** | **28,2 %** |
+| ~~Pôvodné nastavenie (5 s, bez verzie, s nástenkou)~~ | ~~cez 2 500 000~~ | ~~cez 500 %~~ |
+
+Test drží dve hranice: pesimistický mesiac musí ostať pod 500 000 a zároveň mať
+aspoň 15 % rezervu; bežný mesiac musí ostať pod polovicou limitu. Keď niekto
+zrýchli interval alebo pridá Redis volanie do horúcej cesty, test padne a povie,
+o koľko.
+
+Nastavuje sa v `agent/config.json` (`pollSeconds`, `idlePollSeconds`,
+`closedPollSeconds`), v `public/admin-objednavky.js` (`POLL_RUSNO_MS`,
+`POLL_POKOJ_MS`) a premennou `MENU_CACHE_MS`.
+
+### Čo to neznamená
+
+Čísla platia pre **Upstash**. Limity Vercelu už nie sú podstatné — projekt ide na
+iný hosting (viď NEEDS MARTIN #13). Ak sa vymení aj databáza, tento prepočet treba
+spraviť nanovo; test sa dá prenastaviť zmenou `STROP_MESACNE` v `tests/kvoty.test.js`.
 
 ---
+
+## 4b. Dve chyby, ktoré sa našli pri meraní
+
+Obe boli v kóde, ktorý žiadny test nikdy nespustil, lebo všetky testy dovtedy
+bežali v pamäťovom režime bez Redisu.
+
+**1. Fronta by na ostrom Redise bola vždy prázdna.** `save()` ukladá objednávku pod
+kľúč `vila27:objednavka:<id>`, ale `list()` robil `MGET` na holé `<id>` bez predpony.
+Na Upstashi by sa teda **nevytlačila ani jedna objednávka a nástenka by ostala
+prázdna**, hoci by sa dáta ukladali správne. Opravené v
+[`api/_store.js:204-207`](../../api/_store.js); stráži to test
+`D2 – objednávka uložená do Redisu sa naozaj vráti vo fronte`.
+
+**2. Cudzí mohol odstaviť tlač objednávok.** Počítadlo neúspešných prihlásení sa
+čítalo pri **každej** požiadavke, aj tej úspešnej. Okrem toho, že to bola polovica
+mesačnej spotreby, to znamenalo, že desať nesprávnych tokenov z tej istej IP
+(a reštaurácia býva s okolím za spoločným NAT) zablokovalo na štvrť hodiny aj
+tlačového agenta so správnym tokenom. Teraz sa počítadlo číta aj zapisuje iba na
+chybovej ceste ([`api/_token.js:57-87`](../../api/_token.js)). Uhádnuť 32-znakový
+náhodný token sa nedá, takže obmedzovanie je tu proti hluku, nie ako jediná obrana.
 
 ## 5. NEEDS MARTIN
 
@@ -195,8 +251,8 @@ Nastavuje sa v `agent/config.json`: `pollSeconds`, `idlePollSeconds`,
 
 | # | Čo treba | Prečo |
 |---|---|---|
-| 1 | **Zmeniť `ADMIN_USER` a `ADMIN_PASS`** a nastaviť ich vo Verceli. | V repozitári boli natvrdo zapísané údaje `adminvila27 / adminvila27`. Sú v histórii gitu, takže sa musia považovať za prezradené. Heslo aspoň 12 znakov. |
-| 2 | **Overiť `PRINT_TOKEN`** — musí mať aspoň 32 znakov, inak API odmietne všetko. Vygenerovať: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. | Nová podmienka B1. Rovnaký token patrí do `agent/config.json` alebo do premennej `VILA27_TOKEN` na počítači v reštaurácii. |
+| 1 | **Pred ostrým spustením** zmeniť `ADMIN_USER` a `ADMIN_PASS`. Počas testovacej fázy to nehorí. | Údaje `adminvila27 / adminvila27` boli natvrdo v kóde a ostávajú v histórii gitu, takže ich treba považovať za verejné. Kým je to test, nič sa nedeje; v deň, keď na to pôjdu skutočné objednávky, musia byť iné. Heslo aspoň 12 znakov. |
+| 2 | **Overiť `PRINT_TOKEN`** — musí mať aspoň 32 znakov, inak API odmietne všetko. Vygenerovať: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Testovací token stačí vymeniť spolu s bodom 1. | Nová podmienka B1. Rovnaký token patrí do `agent/config.json` alebo do premennej `VILA27_TOKEN` na počítači v reštaurácii. |
 | 3 | **Skontrolovať, kde všade sa `PRINT_TOKEN` doteraz objavil** — v odkazoch typu `/api/queue?token=…` skončil v histórii prehliadača a v logoch CDN. Ak sa taký odkaz niekedy použil, token vymeniť. | Kód ho už v URL neprijíma, staré záznamy však ostávajú. |
 | 4 | **Pridať `ORDER_TTL_DAYS`** (odporúčam `30`). | Bez nej platí 30 dní z kódu; explicitná hodnota je lepšia, lebo presne to sľubuje stránka o ochrane údajov. |
 | 5 | **Voliteľne pridať** `ORDER_IP_LIMIT`, `ORDER_GLOBAL_LIMIT`, `AUTH_FAIL_LIMIT`. | Predvolené hodnoty (5/10 min, 60/hod, 10/15 min) sú rozumné; ak by boli priúzke, ide o jednu premennú. |
@@ -212,7 +268,7 @@ Nastavuje sa v `agent/config.json`: `pollSeconds`, `idlePollSeconds`,
 | 10 | **Nainštalovať agenta v reštaurácii**: skopírovať `agent/config.example.json` na `config.json`, doplniť `apiUrl` a token, otestovať `node print-agent.js` a odskúšať tlač. Do gitu `config.json` nepatrí. |
 | 11 | **Rozhodnúť o finálnej doméne.** Kanonické adresy, `sitemap.xml`, `robots.txt` aj Open Graph teraz ukazujú na `https://www.vila27.sk`. Ak sa použije iná, treba ich prepísať. |
 | 12 | **HSTS preload** — až keď bude ostrá doména a istota, že celá vrátane podstránok pobeží navždy cez HTTPS. Preload sa ťažko vracia späť. |
-| 13 | **Vercel Hobby a komerčné použitie.** Hobby plán je podľa podmienok Vercelu určený pre nekomerčné projekty. Reštaurácia prijímajúca objednávky je komerčná prevádzka — treba prejsť na Pro alebo si to s Vercelom vyjasniť. |
+| 13 | **Zmena hostingu.** Projekt nepôjde na Vercel. Tým padá otázka Hobby verzus komerčné použitie, ale vzniká väčšia: veľká časť ochrany dnes stojí na `vercel.json` a na tom, že Vercel zverejňuje iba `public/`. Na inom hostingu to treba nastaviť nanovo — zoznam je v časti 7. |
 | 14 | **Rozhodnúť o Cloudflare Turnstile.** Pasca na roboty plus limity zatiaľ stačia; hook je pripravený, keby spam pribudol. |
 | 15 | **Potvrdenie objednávky zákazníkovi (SMS/e-mail)** — mimo rozsahu tejto práce. Ak pribudne, e-mail alebo telefón sa stane ďalším osobným údajom a stránka o ochrane údajov sa musí doplniť. |
 | 16 | **Sledovať spotrebu Upstash.** Pri nepretržitej prevádzke celý deň bezplatný limit nestačí — viď časť 4. |
@@ -280,3 +336,95 @@ ktorá už v repozitári bola. Napriek tomu ich, prosím, skontrolujte.
    prvok má viditeľný obrys.
 6. Zmenšiť okno na 320 px → nikde sa neobjaví vodorovný posuvník okrem tabuľky
    v zásadách cookies.
+
+---
+
+## 7. Presun na iný hosting — čo musí nový hosting splniť
+
+Projekt bol spevnený v čase, keď bežal na Verceli, a **časť ochrany stála na
+Verceli, nie na kóde**. To je nebezpečné práve preto, že sa to nepokazí hlučne:
+nová adresa bude fungovať, stránka sa načíta, objednávka prejde — a ochrana
+proste nebude. Nižšie je zoznam, čo z toho už stráži kód sám a čo treba na novom
+hostingu nastaviť ručne.
+
+Kým nie je hosting vybraný, toto je otvorená položka **NEEDS MARTIN #13**.
+
+### 7.1 Čo už kód ustráži sám (host-nezávislé)
+
+| Ochrana | Ako je to zabezpečené |
+|---|---|
+| **Pamäťové úložisko sa v produkcii nepoužije** (D2) | Prepínač už nevisí na `VERCEL_ENV`. Pamäťový režim treba výslovne povoliť premennou `VILA27_ALLOW_MEMORY_STORE=1`; bez nej a bez Redisu vráti `/api/orders` 503. Na novom hostingu ju **nenastavuj**. Overuje test `D2 – pamäťový režim sa zapína výslovne…`. |
+| **Limity sa nedajú obísť podvrhnutou IP** (D1, B5) | `api/_ip.js` verí iba hlavičke, ktorú pomenuješ v `VILA27_IP_HEADER`. Bez nej sa použije adresa spojenia. Overujú testy `D1 – bez nastavenej dôveryhodnej hlavičky…` a `D1 – hlavička s IP platí len vtedy…`. |
+| **Token, ceny, otváracie hodiny, čistenie textu, limity, expirácia údajov** | Všetko je v `api/` a `agent/`, na hostingu nezávisí. |
+
+### 7.2 Čo musí nastaviť nový hosting
+
+| # | Požiadavka | Čo sa stane, ak sa zabudne |
+|---|---|---|
+| H1 | **Koreň webu musí byť `public/`.** Nič z `agent/`, `docs/`, `tests/`, `scripts/`, `config/`, `.env`, `.git/`, `menu.json`, `package.json` sa nesmie dať stiahnuť. | Verejný `agent/config.json` s tokenom, verejná táto správa, verejné `.git`. Ticho. **Najzávažnejšie zo všetkého.** |
+| H2 | **Bezpečnostné hlavičky** z `vercel.json` prepísať do formátu hostingu. | CSP, HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, COOP a `Permissions-Policy` jednoducho zmiznú (G1–G3). Stránka funguje ďalej, nikto si nevšimne. |
+| H3 | **`Cache-Control: no-store` na `/api/*` a `/admin*`** (G4). | Odpoveď s osobnými údajmi sa môže odložiť na CDN alebo v prehliadači. |
+| H4 | **Neznáma adresa → stav 404 a obsah `public/404.html`** (P1). | Mäkká 200, alebo — horšie — výpis obsahu priečinka. |
+| H5 | **Adresy bez `.html`** (`/kontakt`, `/objednavka`, …), teda to, čo robil `cleanUrls`. | `sitemap.xml`, `canonical` aj `robots.txt` ukazujú na adresy bez prípony; bez toho vedú na 404. |
+| H6 | **HTTPS s platným certifikátom**, prípadne presmerovanie z HTTP. | Prihlásenie do správy ponuky používa cookie s príznakom `Secure`, takže by sa **vôbec nedalo prihlásiť**; tlačový agent odmietne `http://` adresu (J1). |
+| H7 | **Node.js 18+** pre `api/*.js` a smerovanie `/api/<meno>` na `api/<meno>.js`. Súbory začínajúce podčiarkovníkom (`api/_store.js`, …) **nesmú** byť dostupné ako endpoint ani ako statický súbor. | Buď objednávky nefungujú, alebo sa dá stiahnuť vnútro aplikácie. |
+| H8 | **Premenné prostredia**: `PRINT_TOKEN`, `ADMIN_USER`, `ADMIN_PASS`, `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `ORDER_TTL_DAYS`, `VILA27_IP_HEADER`. | Bez prvých piatich sa nedá objednávať ani prihlásiť (fail closed, čiže hlučne — to je v poriadku). |
+
+### 7.3 Hodnota `VILA27_IP_HEADER` podľa hostingu
+
+| Hosting | Hodnota |
+|---|---|
+| Cloudflare (Pages, Workers, proxy) | `cf-connecting-ip` |
+| Netlify | `x-nf-client-connection-ip` |
+| Vercel | `x-vercel-forwarded-for` |
+| vlastný nginx / Caddy | `x-real-ip` — **a proxy ju musí prepisovať, nie prepúšťať od klienta** |
+| priamo vystavený Node bez proxy | nenastavovať |
+
+Zlá hodnota je horšia než žiadna: ak sa nastaví hlavička, ktorú proxy neprepisuje,
+limity sa dajú obísť jedným riadkom v `curl`.
+
+### 7.4 Poznámka k vlastnému serveru (VPS)
+
+`dev-server.js` nie je len vývojová hračka — číta hlavičky priamo z `vercel.json`,
+servíruje výhradne `public/`, rieši adresy bez prípony aj skutočnú 404 a spúšťa
+`api/*.js`. Na VPS za nginxom (kvôli TLS a kompresii) splní H1 až H5 a H7 bez
+ďalšej práce. Pred takým použitím ale treba:
+
+1. nastaviť `VILA27_IP_HEADER` podľa proxy (H1 v 7.3),
+2. **nenastaviť** `VILA27_ALLOW_MEMORY_STORE`,
+3. premenné prostredia dodať cez systemd alebo `.env` mimo koreňa webu,
+4. spúšťať ho pod vlastným systémovým používateľom bez práv na zápis do repozitára.
+
+Toto nie je odskúšané — je to návrh, nie hotová konfigurácia.
+
+### 7.5 Čo testy o novom hostingu nepovedia
+
+Testy `A3` a `G1–G4` bežia proti `dev-server.js`. Ten číta `vercel.json` a
+servíruje iba `public/`, takže **budú svietiť nazeleno aj vtedy, keď na ostrom
+hostingu nebude platiť ani jedna hlavička a `.env` bude verejný**. Overujú
+zámer, nie nasadenie.
+
+Po nasadení preto treba to isté odmerať proti skutočnej adrese:
+
+```
+BASE_URL=https://<nova-adresa> npm run security:check
+```
+
+`BASE_URL` prepne HTTP testy na zadaný server. Testy, ktoré si spúšťajú vlastný
+server (zatvorené hodiny, globálny strop, podvrhnutá IP), ostanú lokálne — to je
+v poriadku, tie overujú logiku, nie nasadenie.
+
+Minimum, čo treba po nasadení vyskúšať ručne:
+
+```
+curl -sI https://<adresa>/ | grep -i 'content-security-policy\|strict-transport'
+curl -so /dev/null -w '%{http_code}\n' https://<adresa>/.env
+curl -so /dev/null -w '%{http_code}\n' https://<adresa>/agent/config.json
+curl -so /dev/null -w '%{http_code}\n' https://<adresa>/docs/security/REPORT.md
+curl -so /dev/null -w '%{http_code}\n' https://<adresa>/neexistuje     # musí byť 404
+curl -so /dev/null -w '%{http_code}\n' https://<adresa>/kontakt        # musí byť 200
+```
+
+Prvé štyri musia vrátiť 404. Ak čokoľvek z toho vráti 200, hosting nie je
+nastavený správne a body H1 až H4 neplatia.
+
