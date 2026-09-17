@@ -773,3 +773,18 @@ test('E2 – v logoch nekončia celé objednávky ani plné telefónne čísla',
   assert.match(ordersKod, /maskuj\(tel\)/);
   assert.ok(!/customer\?\.name/.test(agentKod), 'agent loguje meno zákazníka');
 });
+
+test('B1 – nenastavené prihlásenie sa nemá tváriť ako zlé heslo', () => {
+  /* Keď chýba ADMIN_USER/ADMIN_PASS, server nemá s čím porovnávať. Vracať
+     „Nesprávne meno alebo heslo“ je zavádzajúce – majiteľ hľadá chybu
+     v hesle namiesto v nastavení. Vraciame 503 s jasnou vetou. */
+  const kod = fs.readFileSync(path.join(KOREN, 'api', 'admin-auth.js'), 'utf8');
+  assert.match(kod, /if \(!auth\.nastavene\(\)\)/);
+  assert.match(kod, /res\.status\(503\)/);
+  const poradie = kod.indexOf('auth.nastavene()') < kod.indexOf('auth.overUdaje(');
+  assert.ok(poradie, 'kontrola nastavenia musí byť pred porovnaním hesla');
+
+  const auth = require(path.join(KOREN, 'api', '_auth.js'));
+  assert.equal(typeof auth.nastavene, 'function');
+  assert.equal(auth.MIN_HESLO, 12);
+});

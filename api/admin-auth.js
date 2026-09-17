@@ -32,6 +32,22 @@ module.exports = async (req, res) => {
     }
 
     if (akcia === 'prihlas') {
+      /* Rozlíšime „server nemá nastavené prihlásenie“ od „zadal si to zle“.
+         Bez toho dostane majiteľ pri chýbajúcej premennej hlášku o nesprávnom
+         hesle a hľadá chybu tam, kde nie je. Útočníkovi to nepomôže – aj tak
+         sa nemá ako prihlásiť, keď na serveri nie sú žiadne údaje. */
+      if (!auth.nastavene()) {
+        console.error(
+          'Prihlásenie do správy ponuky nie je nastavené: ADMIN_USER musí mať aspoň 3 znaky '
+          + `a ADMIN_PASS aspoň ${auth.MIN_HESLO}. Doplň ich medzi premenné prostredia a reštartuj.`,
+        );
+        auth.zmazCookie(res);
+        return res.status(503).json({
+          ok: false,
+          error: 'Prihlásenie zatiaľ nie je na serveri nastavené. Treba doplniť ADMIN_USER a ADMIN_PASS.',
+        });
+      }
+
       const meno = text(body.meno, 80);
       const heslo = text(body.heslo, 200);
       if (!auth.overUdaje(meno, heslo)) {
