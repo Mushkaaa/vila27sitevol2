@@ -108,13 +108,25 @@
       <button type="button" class="modal-close" id="orderClose" aria-label="Zavrieť">×</button>
     </div>
     <div class="modal-body">
+      <div class="field predobj-prepinac">
+        <label class="checkbox-riadok" for="f-predobj">
+          <input type="checkbox" id="f-predobj" name="predobj" />
+          <span>Predobjednávka na neskorší čas</span>
+        </label>
+        <p class="pole-popis" id="predobjPopis">Jedlo pripravíme na čas, ktorý si vyberiete.</p>
+      </div>
+      <div class="field" id="terminField" hidden>
+        <label for="f-termin">Termín výdaja</label>
+        <select id="f-termin" name="termin"></select>
+      </div>
+
       <div class="grid2">
         <div class="field"><label for="f-name">Meno a priezvisko</label><input id="f-name" required name="name" autocomplete="name" maxlength="80" /></div>
         <div class="field"><label for="f-phone">Telefón</label><input id="f-phone" required name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="+421 …" /></div>
       </div>
       <div class="field" id="addrField"><label for="f-addr" id="addrLabel">Ulica a číslo</label><input id="f-addr" name="address" autocomplete="street-address" maxlength="160" placeholder="Ulica a číslo domu" /></div>
       <div class="grid2">
-        <div class="field"><label for="f-time">Čas</label>
+        <div class="field" id="casField"><label for="f-time">Čas</label>
           <select id="f-time" name="time">
             <option>Čo najskôr</option>
             <option>Do 30 minút</option>

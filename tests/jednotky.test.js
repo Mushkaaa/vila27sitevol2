@@ -788,3 +788,124 @@ test('B1 – nenastavené prihlásenie sa nemá tváriť ako zlé heslo', () => 
   assert.equal(typeof auth.nastavene, 'function');
   assert.equal(auth.MIN_HESLO, 12);
 });
+
+/* ==================================================================== PO
+   Predobjednávky
+   ==================================================================== */
+
+const HODINY_PO = {
+  casovePasmo: 'Europe/Bratislava',
+  tyzden: { 1: [['11:00', '21:30']], 2: [['11:00', '21:30']], 3: [['11:00', '21:30']], 4: [['11:00', '21:30']], 5: [['11:00', '21:30']], 6: [['11:00', '21:30']], 7: [['11:00', '21:30']] },
+  zatvorene: ['2026-09-19'],
+};
+
+test('PO – miestny čas sa prepočíta správne aj cez letný a zimný čas', () => {
+  // Slovensko: v lete UTC+2, v zime UTC+1
+  assert.equal(hodiny.naInstant('2026-07-01', '12:00', 'Europe/Bratislava').toISOString(), '2026-07-01T10:00:00.000Z');
+  assert.equal(hodiny.naInstant('2026-01-15', '12:00', 'Europe/Bratislava').toISOString(), '2026-01-15T11:00:00.000Z');
+  // deň prechodu na zimný čas (posledná októbrová nedeľa 2026 = 25. 10.)
+  assert.equal(hodiny.naInstant('2026-10-25', '12:00', 'Europe/Bratislava').toISOString(), '2026-10-25T11:00:00.000Z');
+  assert.equal(hodiny.naInstant('2026-10-24', '12:00', 'Europe/Bratislava').toISOString(), '2026-10-24T10:00:00.000Z');
+  // kalendárna aritmetika nesmie preskočiť deň
+  assert.equal(hodiny.pridajDni('2026-10-24', 1), '2026-10-25');
+  assert.equal(hodiny.pridajDni('2026-12-31', 1), '2027-01-01');
+  assert.equal(hodiny.denVTyzdni('2026-09-17'), 4);          // štvrtok
+  assert.equal(hodiny.denVTyzdni('2026-09-20'), 7);          // nedeľa
+});
+
+test('PO – termíny sú len dnes a zajtra, v otváracích hodinách, po 15 minútach', () => {
+  // štvrtok 17. 9. 2026, 23:40 miestneho času → dávno po zatváračke
+  const teraz = new Date('2026-09-17T21:40:00Z');
+  const t = hodiny.terminy(teraz, HODINY_PO);
+  assert.ok(t.length > 0, 'po zatvorení sa nedá predobjednať na zajtra');
+
+  // všetky termíny musia byť v budúcnosti a aspoň MIN_DOPREDU minút odteraz
+  for (const x of t) {
+    assert.ok(new Date(x.iso).getTime() >= teraz.getTime() + hodiny.MIN_DOPREDU * 60000, `termín ${x.popis} je priskoro`);
+  }
+  // iba dnes a zajtra
+  assert.deepEqual([...new Set(t.map(x => x.den))].sort(), ['zajtra'], 'po zatváračke sa nesmie dať objednať na dnes');
+  assert.deepEqual([...new Set(t.map(x => x.datum))], ['2026-09-18']);
+  // po štvrťhodinách a v otváracích hodinách
+  for (const x of t) {
+    const m = hodiny.naMinuty(x.cas);
+    assert.equal(m % hodiny.KROK_MINUT, 0, `${x.cas} nie je násobok štvrťhodiny`);
+    assert.ok(m >= hodiny.naMinuty('11:00') && m < hodiny.naMinuty('21:30'), `${x.cas} je mimo otváracích hodín`);
+  }
+  assert.equal(t[0].cas, '11:00');
+  assert.equal(t[t.length - 1].cas, '21:15');
+
+  /* Ešte počas otvorenia: vtedy sa dá objednať aj na dnes neskôr aj na zajtra,
+     a „dnes“ začína až najbližšou štvrťhodinou, ktorá je 30 minút vzdialená. */
+  const pocas = new Date('2026-09-17T18:40:00Z');       // 20:40 miestneho času
+  const d = hodiny.terminy(pocas, HODINY_PO);
+  assert.deepEqual([...new Set(d.map(x => x.den))].sort(), ['dnes', 'zajtra']);
+  assert.equal(d[0].popis, 'dnes o 21:15');
+  assert.ok(d.filter(x => x.den === 'dnes').every(x => hodiny.naMinuty(x.cas) < hodiny.naMinuty('21:30')));
+});
+
+test('PO – deň označený ako zatvorený sa medzi termínmi neobjaví', () => {
+  // piatok 18. 9. večer → zajtra (19. 9.) je v konfigurácii zatvorené
+  const teraz = new Date('2026-09-18T18:40:00Z');
+  const t = hodiny.terminy(teraz, HODINY_PO);
+  assert.deepEqual(t.filter(x => x.datum === '2026-09-19'), [], 'ponúkli sme termín na zatvorený deň');
+});
+
+test('PO – neplatný termín sa odmietne s vysvetlením', () => {
+  const teraz = new Date('2026-09-17T18:40:00Z');
+  const ok = hodiny.terminy(teraz, HODINY_PO)[0];
+  assert.equal(hodiny.overTermin(ok.iso, teraz, HODINY_PO).ok, true);
+
+  // o päť minút – kuchyňa to nestihne
+  assert.match(hodiny.overTermin(new Date(teraz.getTime() + 5 * 60000).toISOString(), teraz, HODINY_PO).chyba, /najskôr/);
+  // pozajtra
+  assert.match(hodiny.overTermin('2026-09-20T16:00:00.000Z', teraz, HODINY_PO).chyba, /dnes alebo zajtra/);
+  // o tretej ráno
+  assert.match(hodiny.overTermin(hodiny.naInstant('2026-09-18', '03:00').toISOString(), teraz, HODINY_PO).chyba, /nevaríme/);
+  // nie je to ani dátum
+  assert.match(hodiny.overTermin('zajtra o šiestej', teraz, HODINY_PO).chyba, /nie je platný/);
+  assert.match(hodiny.overTermin('', teraz, HODINY_PO).chyba, /Vyberte/);
+  // čas medzi štvrťhodinami sa tiež neprijme – ponúkame len to, čo je v zozname
+  assert.equal(hodiny.overTermin(hodiny.naInstant('2026-09-18', '18:07').toISOString(), teraz, HODINY_PO).ok, false);
+});
+
+test('PO – bloček je označený ako predobjednávka a neklame o čase', () => {
+  const { buildReceipt } = require(path.join(KOREN, 'agent', 'receipt.js'));
+  const { CP852 } = require(path.join(KOREN, 'agent', 'escpos.js'));
+  const spat = new Map(Object.entries(CP852).map(([c, k]) => [k, c]));
+  const text = buf => [...buf].map(b => (b < 0x80 ? String.fromCharCode(b) : (spat.get(b) || '?'))).join('');
+
+  const zaklad = {
+    number: 7, createdAt: new Date().toISOString(), mode: 'rozvoz',
+    customer: { name: 'Test', phone: '+421900000000', address: 'A. Hlinku 210', time: 'Čo najskôr', pay: 'Hotovosť', note: '' },
+    items: [{ qty: 1, name: 'Slepačí vývar', extras: [] }], subtotal: 4.1, fee: 0.5, total: 4.6,
+  };
+
+  const pre = text(buildReceipt({ ...zaklad, predobjednavka: true, pozadovanyCasPopis: 'zajtra o 18:30' }, { width: 42, charset: 'cp852' }));
+  assert.match(pre, /PREDOBJ/, 'na bločku nie je vidieť, že ide o predobjednávku');
+  assert.match(pre, /NEROBIŤ TERAZ/);
+  assert.match(pre, /ZAJTRA O 18:30/);
+  assert.match(pre, /VYDAŤ: zajtra o 18:30/);
+  assert.ok(!/Čas: Čo najskôr/.test(pre), 'bloček predobjednávky stále tvrdí „Čo najskôr“');
+
+  const bezna = text(buildReceipt(zaklad, { width: 42, charset: 'cp852' }));
+  assert.ok(!/PREDOBJ/.test(bezna), 'bežná objednávka sa tvári ako predobjednávka');
+  assert.match(bezna, /Čas: Čo najskôr/);
+});
+
+test('PO – nástenka ukáže odznak predobjednávky, stále bez innerHTML', () => {
+  const objednavka = {
+    id: 'x', number: 8, mode: 'odber', total: 10, createdAt: new Date().toISOString(),
+    predobjednavka: true, pozadovanyCasPopis: 'zajtra o 18:30',
+    customer: { name: 'Test', phone: '+421900000000', time: '', pay: '', note: '' },
+    items: [{ qty: 1, name: 'Vývar', extras: [] }],
+  };
+  const karta = vytvorKartu(fakeDoc(), objednavka, {
+    stav: 'nova', nevidena: false,
+    eur: n => Number(n).toFixed(2) + ' €', vek: () => 'teraz', cas: () => '12:00', stara: () => false,
+  });
+  assert.match(karta.className, /predobj/);
+  const text = akoText(karta);
+  assert.match(text, /PREDOBJEDNÁVKA/);
+  assert.match(text, /vydať zajtra o 18:30/);
+});

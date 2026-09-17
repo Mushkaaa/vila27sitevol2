@@ -17,11 +17,36 @@ function skDate(iso) {
  * Pri rozvoze pribudne blok s menom, telefónom a adresou.
  * Pri osobnom odbere je tam len meno a jedlo.
  */
+/** Čo napísať k času výdaja – pri predobjednávke termín, inak voľba zákazníka. */
+function casVydaja(order, c) {
+  if (order.predobjednavka && order.pozadovanyCasPopis) return 'VYDAŤ: ' + order.pozadovanyCasPopis;
+  return c.time ? 'Čas: ' + c.time : '';
+}
+
 function buildReceipt(order, cfg = {}, copyLabel = '') {
   const r = new Receipt({ width: cfg.width || 48, charset: cfg.charset || 'cp852' });
   const c = order.customer || {};
   const rozvoz = order.mode !== 'odber';
   const prices = cfg.showPrices === true;
+
+  // ---- predobjednávka: musí udrieť do očí hneď navrchu ----
+  // Bloček sa tlačí hneď po prijatí, aj keď sa jedlo vydáva o hodiny. Bez
+  // výrazného označenia by ho kuchyňa začala robiť okamžite.
+  if (order.predobjednavka) {
+    const kedy = (order.pozadovanyCasPopis || '').toUpperCase();
+    r.align('center');
+    r.hr('*');
+    r.invert(true).bold(true).size(2, 2);
+    r.ln('PREDOBJ.');
+    r.size(1, 2).ln(' NEROBIŤ TERAZ ').size(1, 1);
+    r.bold(false).invert(false);
+    if (kedy) {
+      r.feed(1);
+      r.size(2, 2).bold(true).ln(kedy).bold(false).size(1, 1);
+    }
+    r.hr('*');
+    r.feed(1);
+  }
 
   // ---- hlavička: číslo objednávky a typ ----
   r.align('center');
@@ -47,11 +72,11 @@ function buildReceipt(order, cfg = {}, copyLabel = '') {
       r.para(c.address);
       r.size(1, 1);
     }
-    if (c.time) r.ln('Čas: ' + c.time);
+    const cv = casVydaja(order, c); if (cv) r.ln(cv);
   } else if (c.name) {
     r.hr('=');
     r.size(1, 2).bold(true).ln(c.name).bold(false).size(1, 1);
-    if (c.time) r.ln('Čas: ' + c.time);
+    const cv = casVydaja(order, c); if (cv) r.ln(cv);
   }
 
   // ---- jedlo ----

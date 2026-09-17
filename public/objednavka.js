@@ -8,6 +8,7 @@
   var MENU = [], TOPPINGS = [], GLUTEN_FREE = { name: "", price: 0 }, ZONES = [];
   var PIZZA_IDS = new Set(), ALL = [];
   var HODINY = { otvorene: true, sprava: "" };
+  var TERMINY = [];              // voľné časy na predobjednávku (dnes a zajtra)
   var OTVORENE_OD = Date.now();                 // C7 – čas strávený na stránke
 
   var eur = function (n) { return n.toFixed(2).replace(".", ",") + " €"; };
@@ -35,6 +36,7 @@
       GLUTEN_FREE = data.glutenFree || { name: "", price: 0 };
       ZONES = data.deliveryZones || [];
       HODINY = data.hodiny || HODINY;
+      TERMINY = data.terminy || [];
       ALL = MENU.reduce(function (a, g) { return a.concat(g.items); }, []);
       PIZZA_IDS = new Set((MENU.find(function (g) { return g.id === "pizza"; }) || { items: [] }).items.map(function (i) { return i.id; }));
       spusti();
@@ -72,7 +74,14 @@
     naplnObce();
     napojUdalosti();
     render();
-    if (!HODINY.otvorene) {
+    naplnTerminy();
+    if (!HODINY.otvorene && TERMINY.length) {
+      $("f-predobj").checked = true;
+      $("f-predobj").disabled = true;      // keď je zatvorené, inak sa to ani nedá
+      prepniPredobjednavku();
+      pas("predobjednavka", "Máme zatvorené, ale objednať sa dá. ",
+        (HODINY.sprava || "") + " Vyberte si čas a jedlo pripravíme naň.");
+    } else if (!HODINY.otvorene) {
       pas("info", "Práve neprijímame objednávky. ",
         (HODINY.sprava || "") + " Ponuku si môžete pokojne prezrieť; objednať sa dá v otváracích hodinách.");
     }
@@ -108,6 +117,30 @@
         '</optgroup>';
     }).join("");
     sel.addEventListener("change", function () { village = sel.value; render(); });
+  }
+
+  /* ---- predobjednávka ---- */
+  function naplnTerminy() {
+    var sel = $("f-termin");
+    if (!sel) return;
+    sel.textContent = "";
+    TERMINY.forEach(function (t) {
+      var o = document.createElement("option");
+      o.value = t.iso;
+      o.textContent = t.popis;
+      sel.appendChild(o);
+    });
+  }
+
+  var predobjednavka = function () { var el = $("f-predobj"); return !!(el && el.checked); };
+
+  function prepniPredobjednavku() {
+    var zap = predobjednavka();
+    $("terminField").hidden = !zap;
+    $("casField").hidden = zap;                 // „Čo najskôr“ pri termíne nedáva zmysel
+    $("predobjPopis").textContent = zap
+      ? "Jedlo pripravíme na vybraný čas. Na bločku v kuchyni bude výrazne označené ako predobjednávka."
+      : "Jedlo pripravíme na čas, ktorý si vyberiete.";
   }
 
   /* ---- košík ---- */
@@ -173,7 +206,11 @@
       }
     }
     $("minNote").textContent = note;
-    $("checkoutBtn").disabled = !cart.length || blocked || !HODINY.otvorene;
+    var daSaObjednat = HODINY.otvorene || TERMINY.length > 0;
+    $("checkoutBtn").disabled = !cart.length || blocked || !daSaObjednat;
+    $("checkoutBtn").textContent = (!HODINY.otvorene && TERMINY.length)
+      ? "Pokračovať k predobjednávke"
+      : "Pokračovať k objednávke";
   }
 
   /* ---- udalosti ---- */
@@ -209,6 +246,7 @@
     });
 
     $("orderForm").addEventListener("submit", odosli);
+    $("f-predobj").addEventListener("change", prepniPredobjednavku);
 
     modal.addEventListener("change", function () { enforceLimits(); updateTopSum(); });
     modal.addEventListener("click", function (e) { if (e.target === modal) closeAddons(); });
@@ -266,6 +304,12 @@
       })
     };
 
+    if (predobjednavka()) {
+      var termin = $("f-termin").value;
+      if (!termin) { chybaFormulara("Vyberte, prosím, termín predobjednávky."); btn.disabled = false; btn.textContent = label; return; }
+      payload.pozadovanyCas = termin;
+    }
+
     fetch(ORDER_API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
       .then(function (res) {
         return res.json()
@@ -300,6 +344,13 @@
     skryPas();
     var meno = payload.customer.name.split(" ")[0];
     var polozky = (data.items || []).map(function (i) { return i.qty + "× " + i.name; }).join(", ");
+    if (data.predobjednavka) {
+      pas("dobre", "Predobjednávka č. " + data.number + " je prijatá. ",
+        "Ďakujeme, " + meno + ". " + (polozky ? polozky + ". " : "") +
+        "Spolu " + eur(Number(data.total)) + ". Pripravíme ju na " + (data.pozadovanyCasPopis || "dohodnutý čas") + ".");
+      flash("Predobjednávka č. " + data.number + " je prijatá.", 6000, true);
+      return;
+    }
     pas("dobre", "Objednávka č. " + data.number + " je prijatá. ",
       "Ďakujeme, " + meno + ". " + (polozky ? polozky + ". " : "") +
       "Spolu " + eur(Number(data.total)) + ". " +

@@ -157,7 +157,8 @@ function spustiTesty() {
 /** „G1/G3 – …“ → ['G1','G3'] */
 function idZMena(meno) {
   const hlava = meno.split('–')[0].split('-')[0].trim();
-  const ids = hlava.match(/\b[A-K]\d{0,2}\b|\bP[1-7]\b|\bE2E\b/g) || [];
+  // PO a E2E musia byť pred všeobecným [A-K], inak by sa z nich vzalo len „P“ / „E“
+  const ids = hlava.match(/\bPO\b|\bE2E\b|\bP[1-7]\b|\b[A-K]\d{0,2}\b/g) || [];
   return ids.length ? ids : ['ostatné'];
 }
 
@@ -212,6 +213,7 @@ const POPISY = {
   P5: 'security.txt',
   P6: 'Prístupnosť',
   P7: 'Výkon: alt, lazy loading',
+  PO: 'Predobjednávky (objednať cez zatvorené)',
   E2E: 'Celá cesta objednávky až po bloček',
 };
 

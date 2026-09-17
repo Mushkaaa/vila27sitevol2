@@ -27,7 +27,7 @@
     }
 
     var karta = doc.createElement("article");
-    karta.className = "card " + s + (nevidena ? " nevidena" : "");
+    karta.className = "card " + s + (nevidena ? " nevidena" : "") + (o.predobjednavka ? " predobj" : "");
 
     /* --- hlavička karty --- */
     var top = el(karta, "div", "c-top");
@@ -36,6 +36,13 @@
     var age = el(top, "span", "c-age" + (stara(o.createdAt) && s !== "hotova" ? " stara" : ""));
     el(age, "span", "rel", vek(o.createdAt));
     el(age, "span", "abs", cas(o.createdAt));
+
+    /* --- predobjednávka: obsluha musí vidieť, že sa to nerobí teraz --- */
+    if (o.predobjednavka) {
+      var pre = el(karta, "div", "c-predobj");
+      el(pre, "b", null, "PREDOBJEDNÁVKA");
+      if (o.pozadovanyCasPopis) el(pre, "span", "c-predobj-cas", "vydať " + o.pozadovanyCasPopis);
+    }
 
     /* --- jedlo --- */
     var items = el(karta, "div", "c-items");

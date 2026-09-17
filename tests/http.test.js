@@ -53,7 +53,7 @@ async function server(env = {}, port) {
   throw new Error('dev-server sa nerozbehol na porte ' + port);
 }
 
-let A, B, C, D;
+let A, B, C, D, P;
 
 test.before(async () => {
   A = process.env.BASE_URL || await server({ ORDER_GLOBAL_LIMIT: '200' }, 3101);
@@ -61,6 +61,8 @@ test.before(async () => {
   C = await server({ ORDER_GLOBAL_LIMIT: '3' }, 3103);
   // hosting BEZ dôveryhodnej proxy – hlavičke s IP sa nesmie veriť
   D = await server({ VILA27_IP_HEADER: '', ORDER_GLOBAL_LIMIT: '200' }, 3104);
+  // otvorené len ráno – teraz je teda zatvorené, ale na zajtra ráno sa predobjednať dá
+  P = await server({ VILA27_HOURS_FILE: FIX('hodiny-rano.json'), ORDER_GLOBAL_LIMIT: '200' }, 3105);
 });
 
 test.after(() => servery.forEach(p => { try { p.kill(); } catch { /* už padol */ } }));
@@ -581,4 +583,65 @@ test('D1 – hlavička s IP platí len vtedy, keď je výslovne pomenovaná', as
   await d1.body?.cancel?.();
 
   assert.match(fs.readFileSync(path.join(KOREN, 'api', '_ip.js'), 'utf8'), /process\.env\.VILA27_IP_HEADER/);
+});
+
+/* ==================================================================== PO */
+
+test('PO – cez zatvorené prejde predobjednávka, bežná objednávka nie', async () => {
+  // server B má zatvorené každý deň, takže nemá žiadne voľné termíny
+  const bezna = await posli(B, objednavka());
+  assert.equal(bezna.status, 409);
+  const d = await bezna.json();
+  assert.equal(d.zatvorene, true);
+  assert.equal(d.predobjednavkaMozna, false, 'pri trvalo zatvorenom nemá čo ponúkať');
+  assert.match(d.error, /predobjednávku/i);
+
+  /* Server P má otváracie hodiny len ráno, takže popoludní je zatvorený,
+     ale na zajtra ráno sa predobjednať dá. Presne ten prípad, o ktorý ide. */
+  const menu = await (await fetch(P + '/api/menu')).json();
+  assert.ok(Array.isArray(menu.terminy) && menu.terminy.length, 'server neponúka žiadne termíny');
+
+  const zatvoreneTeraz = await posli(P, objednavka());
+  assert.equal(zatvoreneTeraz.status, 409, 'bežná objednávka mimo hodín má byť odmietnutá');
+  assert.equal((await zatvoreneTeraz.json()).predobjednavkaMozna, true);
+
+  const termin = menu.terminy[0];
+  const pre = await posli(P, objednavka({ pozadovanyCas: termin.iso }));
+  assert.equal(pre.status, 201, 'predobjednávka cez zatvorené neprešla');
+  const p = await pre.json();
+  assert.equal(p.predobjednavka, true);
+  assert.equal(p.pozadovanyCasPopis, termin.popis);
+});
+
+test('PO – neplatný termín predobjednávky sa odmietne', async () => {
+  const skusky = [
+    ['minulosť', '2020-01-01T10:00:00.000Z', /najskôr|nevaríme|dnes alebo zajtra/i],
+    ['o týždeň', new Date(Date.now() + 7 * 864e5).toISOString(), /dnes alebo zajtra/i],
+    ['nezmysel', 'zajtra o šiestej', /nie je platný/i],
+    ['prázdny', '', /Vyberte/i],
+  ];
+  for (const [co, hodnota, vzor] of skusky) {
+    const r = await posli(P, objednavka({ pozadovanyCas: hodnota }));
+    assert.equal(r.status, 400, co);
+    assert.match((await r.json()).error, vzor, co);
+  }
+  // nesprávny typ
+  const zly = await posli(P, objednavka({ pozadovanyCas: 12345 }));
+  assert.equal(zly.status, 400);
+});
+
+test('PO – predobjednávka sa dostane na nástenku aj do fronty označená', async () => {
+  const menu = await (await fetch(P + '/api/menu')).json();
+  const termin = menu.terminy[1] || menu.terminy[0];
+  const r = await posli(P, objednavka({ pozadovanyCas: termin.iso }));
+  assert.equal(r.status, 201);
+  const prijata = await r.json();
+
+  const q = await fetch(P + '/api/queue?all=1', { headers: { Authorization: 'Bearer ' + TOKEN } });
+  const { orders } = await q.json();
+  const moja = orders.find(o => o.number === prijata.number);
+  assert.ok(moja, 'predobjednávka nie je vo fronte');
+  assert.equal(moja.predobjednavka, true);
+  assert.equal(moja.pozadovanyCas, termin.iso);
+  assert.equal(moja.pozadovanyCasPopis, termin.popis);
 });
