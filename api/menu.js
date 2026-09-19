@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
     if (pamat.telo && pamat.do > Date.now()) {
       res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
       // stav otvorené/zatvorené sa počíta lokálne, Redis naň netreba
-      return res.status(200).json({ ...pamat.telo, hodiny: hodiny.stav() });
+      return res.status(200).json({ ...pamat.telo, hodiny: hodiny.stav(), terminy: hodiny.terminy() });
     }
     const [rozvoz, jedalnylistok] = await Promise.all([
       menu.nacitaj('rozvoz'),
@@ -50,7 +50,8 @@ module.exports = async (req, res) => {
     // Krátko, nech sa úprava ponuky prejaví na stránke do minúty. Kratšie okno,
     // lebo v odpovedi je aj stav otvorené/zatvorené (C4).
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=120');
-    return res.status(200).json({ ...telo, hodiny: hodiny.stav() });
+    // termíny sa nekešujú – posúvajú sa každou štvrťhodinou
+    return res.status(200).json({ ...telo, hodiny: hodiny.stav(), terminy: hodiny.terminy() });
   } catch (e) {
     console.error('Menu sa nepodarilo poskladať:', e.message);   // H1
     return res.status(503).json({ ok: false, error: 'Ponuku sa nepodarilo načítať.' });

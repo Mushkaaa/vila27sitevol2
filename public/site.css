@@ -617,3 +617,11 @@ body.ck-open{padding-bottom:0}
 .oznam-pas.dobre{border-left-color:#2F7A3E;background:#EDF6EF}
 .hp-pole{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .suhlas-note{font-size:.85rem;color:var(--grey);line-height:1.45;margin-top:10px}
+
+/* --- predobjednávka na objednávkovej stránke --- */
+.predobj-prepinac{border:1.5px solid var(--rule);border-radius:var(--radius);padding:12px 14px;background:var(--white)}
+.checkbox-riadok{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700}
+.checkbox-riadok input{width:20px;height:20px;accent-color:var(--accent);cursor:pointer}
+.checkbox-riadok input:disabled{cursor:default}
+.pole-popis{font-size:.86rem;color:var(--grey);margin-top:6px;line-height:1.45}
+.oznam-pas.predobjednavka{border-left-color:#2F6FB5;background:#EDF3FA}

@@ -39,7 +39,7 @@ const zonaPre = (zony, obec) => zony.find(z => z.villages.includes(obec)) || nul
 // Cenové polia sú zámerne v zozname: staršie verzie stránky ich posielali.
 // Neodmietame ich, ale ani im neveríme – cenu vždy ráta server (C1).
 const IGNOROVANE_CENY = ['price', 'unitPrice', 'lineTotal', 'subtotal', 'total', 'fee'];
-const POLIA_TELO = new Set(['mode', 'customer', 'items', 'orderKey', 'trvanieMs', 'web', 'turnstileToken', ...IGNOROVANE_CENY]);
+const POLIA_TELO = new Set(['mode', 'customer', 'items', 'orderKey', 'trvanieMs', 'web', 'turnstileToken', 'pozadovanyCas', ...IGNOROVANE_CENY]);
 const POLIA_ZAKAZNIK = new Set(['name', 'phone', 'village', 'address', 'time', 'pay', 'note']);
 const POLIA_POLOZKA = new Set(['id', 'qty', 'extras', 'gf', 'name', ...IGNOROVANE_CENY]);
 
@@ -242,10 +242,26 @@ module.exports = async (req, res) => {
       return chyba(res, 400, 'Overenie sa nepodarilo. Skúste to, prosím, znova.');
     }
 
-    // C4 – otváracie hodiny rozhoduje server
-    const h = hodiny.stav();
-    if (!h.otvorene) {
-      return res.status(409).json({ ok: false, zatvorene: true, error: `${h.sprava} Zavolať nám môžete na ${TEL_PODPORA}.` });
+    /* C4 – otváracie hodiny rozhoduje server.
+        Predobjednávka je výnimka: práve preto existuje, aby sa dalo objednať
+        aj cez zatvorené. Termín však musí sedieť do otváracích hodín, o tom
+        rozhoduje hodiny.overTermin() nižšie. */
+    let termin = null;
+    if (body.pozadovanyCas !== undefined) {
+      if (typeof body.pozadovanyCas !== 'string') {
+        return chyba(res, 400, 'Čas predobjednávky nie je platný.');
+      }
+      const overenie = hodiny.overTermin(body.pozadovanyCas);
+      if (!overenie.ok) return chyba(res, 400, overenie.chyba);
+      termin = overenie.termin;
+    } else {
+      const h = hodiny.stav();
+      if (!h.otvorene) {
+        return res.status(409).json({
+          ok: false, zatvorene: true, predobjednavkaMozna: hodiny.terminy().length > 0,
+          error: `${h.sprava} Môžete si však spraviť predobjednávku na neskôr, alebo nám zavolať na ${TEL_PODPORA}.`,
+        });
+      }
     }
 
     // C8 – dvojité odoslanie (dvojklik, obnovenie) nesmie vyrobiť dve objednávky
@@ -306,15 +322,25 @@ module.exports = async (req, res) => {
       subtotal,
       fee,
       total,
+      predobjednavka: Boolean(termin),
+      pozadovanyCas: termin ? termin.iso : '',
+      pozadovanyCasPopis: termin ? termin.popis : '',
     };
 
     await store.save(order);
 
-    const odpoved = { number: order.number, total: order.total, subtotal, fee, mode, items: items.map(i => ({ name: i.name, qty: i.qty })) };
+    const odpoved = {
+      number: order.number, total: order.total, subtotal, fee, mode,
+      predobjednavka: order.predobjednavka,
+      pozadovanyCasPopis: order.pozadovanyCasPopis,
+      items: items.map(i => ({ name: i.name, qty: i.qty })),
+    };
     if (klucRedis) { try { await store.set(klucRedis, JSON.stringify(odpoved), 15 * 60); } catch { /* nevadí */ } }
 
     // E2 – do logu nejde celé telo objednávky ani plný telefón
-    console.log(`Objednávka #${order.number} prijatá (${mode}, ${items.length} položiek, tel ${maskuj(tel)})`);
+    console.log(`${order.predobjednavka ? 'Predobjednávka' : 'Objednávka'} #${order.number} prijatá `
+      + `(${mode}, ${items.length} položiek, tel ${maskuj(tel)}`
+      + `${order.predobjednavka ? ', na ' + order.pozadovanyCasPopis : ''})`);
 
     return res.status(201).json({ ok: true, ...odpoved });
   } catch (e) {

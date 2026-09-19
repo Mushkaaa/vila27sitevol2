@@ -1,0 +1,10 @@
+{
+  "_popis": "Testovacia konfigurácia: otvorené iba 06:00–06:30. Počas behu testov je teda zatvorené, ale na zajtra ráno sa dá predobjednať.",
+  "casovePasmo": "Europe/Bratislava",
+  "tyzden": {
+    "1": [["06:00", "06:30"]], "2": [["06:00", "06:30"]], "3": [["06:00", "06:30"]],
+    "4": [["06:00", "06:30"]], "5": [["06:00", "06:30"]], "6": [["06:00", "06:30"]],
+    "7": [["06:00", "06:30"]]
+  },
+  "zatvorene": []
+}

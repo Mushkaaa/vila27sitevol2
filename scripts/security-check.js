@@ -50,6 +50,7 @@ const ZASTUPNE = /^(__|TU_DAJ|DOPLNIT|DOPLNIŤ|XXX|YOUR_|CHANGE|EXAMPLE|TEST|tes
  */
 const NA_ROTACIU = [
   { vzor: 'adminvila27', preco: 'predvolené prihlasovacie údaje do správy ponuky – NEEDS MARTIN #1 v REPORT.md' },
+  { vzor: 'vila27adminko', preco: 'testovacie heslo, ktoré sa dostalo do verejného repozitára – NEEDS MARTIN #1, vymeniť pred nasadením' },
 ];
 const dovodRotacie = h => (NA_ROTACIU.find(z => h.includes(z.vzor)) || {}).preco || null;
 
@@ -62,8 +63,9 @@ const PRAVIDLA = [
   { id: 'Upstash REST URL s tokenom', re: /https:\/\/[a-z0-9-]+\.upstash\.io[^\s"']*[?&](?:_token|token)=[A-Za-z0-9=_-]{8,}/g },
   // hodnota priradená premennej, ktorá vyzerá ako tajomstvo
   { id: 'hodnota tajnej premennej', re: /\b(PRINT_TOKEN|ADMIN_PASS|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN|TURNSTILE_SECRET_KEY)\s*[:=]\s*["']?([^\s"',;]{8,})/g, skupina: 2 },
-  // natvrdo zapísaná náhrada: process.env.ADMIN_PASS || 'heslo'
-  { id: 'zapísaná náhrada za premennú', re: /\b(?:PRINT_TOKEN|ADMIN_PASS|ADMIN_USER|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)\s*\|\|\s*['"]([^'"]{3,})['"]/g, skupina: 1 },
+  // natvrdo zapísaná náhrada: process.env.ADMIN_PASS || 'heslo' aj ||= 'heslo'
+  // (`||=` je tvar, ktorý používa dev-server.js – bez `=?` tu raz prekĺzlo heslo)
+  { id: 'zapísaná náhrada za premennú', re: /\b(?:PRINT_TOKEN|ADMIN_PASS|ADMIN_USER|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)\s*\|\|=?\s*['"]([^'"]{3,})['"]/g, skupina: 1 },
   // "token": "…" v konfiguráciách
   { id: 'token v konfigurácii', re: /"(?:token|password|heslo|secret)"\s*:\s*"([^"]{8,})"/g, skupina: 1 },
 ];
@@ -157,7 +159,8 @@ function spustiTesty() {
 /** „G1/G3 – …“ → ['G1','G3'] */
 function idZMena(meno) {
   const hlava = meno.split('–')[0].split('-')[0].trim();
-  const ids = hlava.match(/\b[A-K]\d{0,2}\b|\bP[1-7]\b|\bE2E\b/g) || [];
+  // PO a E2E musia byť pred všeobecným [A-K], inak by sa z nich vzalo len „P“ / „E“
+  const ids = hlava.match(/\bPO\b|\bE2E\b|\bP[1-7]\b|\b[A-K]\d{0,2}\b/g) || [];
   return ids.length ? ids : ['ostatné'];
 }
 
@@ -212,6 +215,7 @@ const POPISY = {
   P5: 'security.txt',
   P6: 'Prístupnosť',
   P7: 'Výkon: alt, lazy loading',
+  PO: 'Predobjednávky (objednať cez zatvorené)',
   E2E: 'Celá cesta objednávky až po bloček',
 };
 

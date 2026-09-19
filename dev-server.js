@@ -23,8 +23,10 @@ const WEB = path.join(ROOT, 'public');
 
 // Lokálny token musí spĺňať rovnaké pravidlo ako na ostro (aspoň 32 znakov).
 process.env.PRINT_TOKEN ||= 'lokalny-vyvojovy-token-0123456789abcdef';
-process.env.ADMIN_USER ||= 'vyvoj';
-process.env.ADMIN_PASS ||= 'lokalne-heslo-na-vyvoj';
+// Prihlásenie do správy ponuky tu zámerne NEMÁ náhradnú hodnotu – repozitár je
+// verejný a natvrdo zapísané heslo by v ňom ostalo navždy. Daj si ho do .env.
+process.env.ADMIN_USER ||= '';
+process.env.ADMIN_PASS ||= '';
 // Bez Upstashu drží objednávky v pamäti – výslovné povolenie, nie odhad (D2).
 process.env.VILA27_ALLOW_MEMORY_STORE ||= '1';
 
@@ -127,4 +129,8 @@ http.createServer((req, res) => {
   console.log(`Správa:           http://localhost:${PORT}/admin`);
   console.log(`  objednávky:     /admin-objednavky   (kód = PRINT_TOKEN z prostredia)`);
   console.log(`  ponuka:         /admin-produkty     (ADMIN_USER / ADMIN_PASS z prostredia)`);
+  if (!process.env.ADMIN_USER || !process.env.ADMIN_PASS) {
+    console.log(`\n  POZOR: ADMIN_USER/ADMIN_PASS nie sú nastavené, do /admin-produkty sa neprihlásiš.`);
+    console.log(`         Sprav si .env:  cp .env.example .env   a doplň si tam svoje údaje.`);
+  }
 });
