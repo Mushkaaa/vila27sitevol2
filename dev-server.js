@@ -23,8 +23,8 @@ const WEB = path.join(ROOT, 'public');
 
 // Lokálny token musí spĺňať rovnaké pravidlo ako na ostro (aspoň 32 znakov).
 process.env.PRINT_TOKEN ||= 'lokalny-vyvojovy-token-0123456789abcdef';
-process.env.ADMIN_USER ||= 'vyvoj';
-process.env.ADMIN_PASS ||= 'lokalne-heslo-na-vyvoj';
+process.env.ADMIN_USER ||= 'vila27adminko';
+process.env.ADMIN_PASS ||= 'vila27adminko';
 // Bez Upstashu drží objednávky v pamäti – výslovné povolenie, nie odhad (D2).
 process.env.VILA27_ALLOW_MEMORY_STORE ||= '1';
 
