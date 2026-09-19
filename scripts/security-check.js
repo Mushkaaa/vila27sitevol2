@@ -50,6 +50,7 @@ const ZASTUPNE = /^(__|TU_DAJ|DOPLNIT|DOPLNIŤ|XXX|YOUR_|CHANGE|EXAMPLE|TEST|tes
  */
 const NA_ROTACIU = [
   { vzor: 'adminvila27', preco: 'predvolené prihlasovacie údaje do správy ponuky – NEEDS MARTIN #1 v REPORT.md' },
+  { vzor: 'vila27adminko', preco: 'testovacie heslo, ktoré sa dostalo do verejného repozitára – NEEDS MARTIN #1, vymeniť pred nasadením' },
 ];
 const dovodRotacie = h => (NA_ROTACIU.find(z => h.includes(z.vzor)) || {}).preco || null;
 
@@ -62,8 +63,9 @@ const PRAVIDLA = [
   { id: 'Upstash REST URL s tokenom', re: /https:\/\/[a-z0-9-]+\.upstash\.io[^\s"']*[?&](?:_token|token)=[A-Za-z0-9=_-]{8,}/g },
   // hodnota priradená premennej, ktorá vyzerá ako tajomstvo
   { id: 'hodnota tajnej premennej', re: /\b(PRINT_TOKEN|ADMIN_PASS|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN|TURNSTILE_SECRET_KEY)\s*[:=]\s*["']?([^\s"',;]{8,})/g, skupina: 2 },
-  // natvrdo zapísaná náhrada: process.env.ADMIN_PASS || 'heslo'
-  { id: 'zapísaná náhrada za premennú', re: /\b(?:PRINT_TOKEN|ADMIN_PASS|ADMIN_USER|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)\s*\|\|\s*['"]([^'"]{3,})['"]/g, skupina: 1 },
+  // natvrdo zapísaná náhrada: process.env.ADMIN_PASS || 'heslo' aj ||= 'heslo'
+  // (`||=` je tvar, ktorý používa dev-server.js – bez `=?` tu raz prekĺzlo heslo)
+  { id: 'zapísaná náhrada za premennú', re: /\b(?:PRINT_TOKEN|ADMIN_PASS|ADMIN_USER|KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)\s*\|\|=?\s*['"]([^'"]{3,})['"]/g, skupina: 1 },
   // "token": "…" v konfiguráciách
   { id: 'token v konfigurácii', re: /"(?:token|password|heslo|secret)"\s*:\s*"([^"]{8,})"/g, skupina: 1 },
 ];
